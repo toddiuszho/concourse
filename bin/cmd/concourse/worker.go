@@ -8,6 +8,7 @@ import (
 
 	"code.cloudfoundry.org/lager"
 	"github.com/concourse/baggageclaim/baggageclaimcmd"
+	"github.com/concourse/concourse"
 	concourseWorker "github.com/concourse/concourse/worker"
 	"github.com/concourse/concourse/worker/beacon"
 	workerConfig "github.com/concourse/concourse/worker/start"
@@ -52,6 +53,10 @@ func (cmd *WorkerCommand) Execute(args []string) error {
 }
 
 func (cmd *WorkerCommand) Runner(args []string) (ifrit.Runner, error) {
+	if cmd.ResourceTypes == "" {
+		cmd.ResourceTypes = flag.Dir(discoverAsset("resource-types"))
+	}
+
 	logger, _ := cmd.Logger.Logger("worker")
 
 	logger.Info("*********************** Bishoy was here!")
@@ -60,7 +65,7 @@ func (cmd *WorkerCommand) Runner(args []string) (ifrit.Runner, error) {
 		return nil, err
 	}
 
-	worker.Version = WorkerVersion
+	worker.Version = concourse.WorkerVersion
 
 	baggageclaimRunner, err := cmd.baggageclaimRunner(logger.Session("baggageclaim"))
 	if err != nil {
