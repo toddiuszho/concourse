@@ -21,9 +21,9 @@
     - per Alex, this doesn't exist anymore! just test against the dev docker-compose now!
 
 # Side Notes: 
-  * Will need to run docker cleanup commands for every run
+  * Will need to run docker cleanup commands for every run `docker rm (docker ps -aq)`
   * It will be really beneficial to use overrides that kinda resembles the operations files in bosh
   * Equivalents:
-    * delete-deployment --> docker compose down
+    * delete-deployment --> docker-compose down
     * deploy --> docker-compose up 
     * 

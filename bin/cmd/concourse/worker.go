@@ -54,6 +54,7 @@ func (cmd *WorkerCommand) Execute(args []string) error {
 func (cmd *WorkerCommand) Runner(args []string) (ifrit.Runner, error) {
 	logger, _ := cmd.Logger.Logger("worker")
 
+	logger.Info("*********************** Bishoy was here!")
 	worker, gardenRunner, err := cmd.gardenRunner(logger.Session("garden"))
 	if err != nil {
 		return nil, err

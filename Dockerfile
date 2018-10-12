@@ -15,6 +15,7 @@ ENV CONCOURSE_TSA_HOST_KEY        /concourse-keys/tsa_host_key
 ENV CONCOURSE_TSA_AUTHORIZED_KEYS /concourse-keys/authorized_worker_keys
 ENV CONCOURSE_SESSION_SIGNING_KEY /concourse-keys/session_signing_key
 
+
 # keys for 'worker'
 ENV CONCOURSE_TSA_PUBLIC_KEY         /concourse-keys/tsa_host_key.pub
 ENV CONCOURSE_TSA_WORKER_PRIVATE_KEY /concourse-keys/worker_key
@@ -22,6 +23,7 @@ ENV CONCOURSE_TSA_WORKER_PRIVATE_KEY /concourse-keys/worker_key
 # build Concourse
 COPY . /src
 WORKDIR /src
+RUN ls -l
 RUN go build -o /usr/local/bin/concourse github.com/concourse/concourse/bin/cmd/concourse
 
 # override /src with a volume so we get live-updated packr stuff

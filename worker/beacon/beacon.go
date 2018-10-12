@@ -122,7 +122,7 @@ func (beacon *Beacon) Register(signals <-chan os.Signal, ready chan<- struct{}) 
 		}
 	}
 
-	beacon.Logger.Debug("adding-connection-to-pool")
+	beacon.Logger.Info("adding-connection-to-pool")
 
 	latestErrChan := make(chan error, 1)
 
@@ -134,7 +134,7 @@ func (beacon *Beacon) Register(signals <-chan os.Signal, ready chan<- struct{}) 
 		case <-rebalanceTicker.C:
 			if beacon.RegistrationMode == Forward && bwg.Count() < 5 {
 				bwg.Increment()
-				beacon.Logger.Debug("adding-connection-to-pool")
+				beacon.Logger.Info("adding-connection-to-pool")
 				latestErrChan = make(chan error, 1)
 				go registerWorker(latestErrChan)
 			}

@@ -138,7 +138,6 @@ require (
 	github.com/prometheus/client_golang v0.9.0-pre1
 	github.com/ryanuber/go-glob v0.0.0-20170128012129-256dc444b735 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
-	github.com/sclevine/agouti v3.0.0+incompatible
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/sirupsen/logrus v1.0.6
 	github.com/skratchdot/open-golang v0.0.0-20160302144031-75fb7ed4208c
@@ -153,7 +152,7 @@ require (
 	github.com/vito/houdini v0.0.0-20170630141751-8dda540e3245
 	github.com/vito/twentythousandtonnesofcrudeoil v0.0.0-20180305154709-3b21ad808fcb
 	golang.org/x/crypto v0.0.0-20180927165925-5295e8364332
-	golang.org/x/net v0.0.0-20180926154720-4dfa2610cdf3 // indirect
+	golang.org/x/net v0.0.0-20181003013248-f5e5bdd77824 // indirect
 	golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be
 	golang.org/x/sys v0.0.0-20180928133829-e4b3c5e90611 // indirect
 	golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2 // indirect
