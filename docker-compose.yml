@@ -37,6 +37,8 @@ services:
     privileged: true
     depends_on: [web]
     ports: ["7777", "7788"]
+    deploy:
+      replicas: 2
     environment:
     - CONCOURSE_FORWARD_REBALANCE_TIME=1m
     - CONCOURSE_TSA_HOST=web:2222
