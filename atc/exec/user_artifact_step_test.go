@@ -62,7 +62,7 @@ var _ = Describe("UserArtifactStep", func() {
 		go state.SendUserInput("some-plan-id", input)
 
 		Expect(dest.StreamInCallCount()).To(Equal(0))
-		Expect(source.StreamTo(dest)).To(Succeed())
+		Expect(source.StreamTo(context.TODO(), dest)).To(Succeed())
 		Expect(dest.StreamInCallCount()).To(Equal(1))
 
 		path, stream := dest.StreamInArgsForCall(0)

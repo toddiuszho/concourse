@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"time"
 
 	"code.cloudfoundry.org/lager/lagertest"
 	"github.com/cloudfoundry/bosh-cli/director/template"
@@ -258,7 +259,7 @@ var _ = Describe("GetStep", func() {
 					})
 
 					It("streams the resource to the destination", func() {
-						err := artifactSource.StreamTo(fakeDestination)
+						err := artifactSource.StreamTo(context.TODO(), fakeDestination)
 						Expect(err).NotTo(HaveOccurred())
 
 						Expect(fakeVersionedSource.StreamOutCallCount()).To(Equal(1))
@@ -278,7 +279,7 @@ var _ = Describe("GetStep", func() {
 						})
 
 						It("returns the error", func() {
-							Expect(artifactSource.StreamTo(fakeDestination)).To(Equal(disaster))
+							Expect(artifactSource.StreamTo(context.TODO(), fakeDestination)).To(Equal(disaster))
 						})
 					})
 
@@ -290,7 +291,20 @@ var _ = Describe("GetStep", func() {
 						})
 
 						It("returns the error", func() {
-							Expect(artifactSource.StreamTo(fakeDestination)).To(Equal(disaster))
+							Expect(artifactSource.StreamTo(context.TODO(), fakeDestination)).To(Equal(disaster))
+						})
+					})
+
+					Context("when streaming in to the destination hangs", func() {
+						BeforeEach(func() {
+							fakeDestination.StreamInStub = func(str string, reader io.Reader) error {
+								time.Sleep(10 * time.Second)
+								return nil
+							}
+						})
+
+						It("returns a deadline exceeded error", func() {
+							Expect(artifactSource.StreamTo(context.TODO(), fakeDestination)).To(Equal(context.DeadlineExceeded))
 						})
 					})
 				})
@@ -303,7 +317,21 @@ var _ = Describe("GetStep", func() {
 					})
 
 					It("returns the error", func() {
-						Expect(artifactSource.StreamTo(fakeDestination)).To(Equal(disaster))
+						Expect(artifactSource.StreamTo(context.TODO(), fakeDestination)).To(Equal(disaster))
+					})
+				})
+
+				FContext("when streaming out from the resource hangs", func() {
+					BeforeEach(func() {
+						fakeVersionedSource.StreamOutStub = func(str string) (io.ReadCloser, error) {
+							time.Sleep(10 * time.Second)
+							// change this to prevent the test from panicking
+							return nil, nil
+						}
+					})
+
+					It("returns a deadline exceeded error", func() {
+						Expect(artifactSource.StreamTo(context.TODO(), fakeDestination)).To(Equal(context.DeadlineExceeded))
 					})
 				})
 			})

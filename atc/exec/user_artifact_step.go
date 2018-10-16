@@ -50,7 +50,7 @@ type streamSource struct {
 	state  RunState
 }
 
-func (source streamSource) StreamTo(dest worker.ArtifactDestination) error {
+func (source streamSource) StreamTo(ctx context.Context, dest worker.ArtifactDestination) error {
 	pb := progress(string(source.step.name)+":", source.step.delegate.Stdout())
 
 	return source.state.ReadUserInput(source.step.id, func(rc io.ReadCloser) error {

@@ -2,6 +2,7 @@
 package workerfakes
 
 import (
+	context "context"
 	io "io"
 	sync "sync"
 
@@ -22,10 +23,11 @@ type FakeArtifactSource struct {
 		result1 io.ReadCloser
 		result2 error
 	}
-	StreamToStub        func(worker.ArtifactDestination) error
+	StreamToStub        func(context.Context, worker.ArtifactDestination) error
 	streamToMutex       sync.RWMutex
 	streamToArgsForCall []struct {
-		arg1 worker.ArtifactDestination
+		arg1 context.Context
+		arg2 worker.ArtifactDestination
 	}
 	streamToReturns struct {
 		result1 error
@@ -105,16 +107,17 @@ func (fake *FakeArtifactSource) StreamFileReturnsOnCall(i int, result1 io.ReadCl
 	}{result1, result2}
 }
 
-func (fake *FakeArtifactSource) StreamTo(arg1 worker.ArtifactDestination) error {
+func (fake *FakeArtifactSource) StreamTo(arg1 context.Context, arg2 worker.ArtifactDestination) error {
 	fake.streamToMutex.Lock()
 	ret, specificReturn := fake.streamToReturnsOnCall[len(fake.streamToArgsForCall)]
 	fake.streamToArgsForCall = append(fake.streamToArgsForCall, struct {
-		arg1 worker.ArtifactDestination
-	}{arg1})
-	fake.recordInvocation("StreamTo", []interface{}{arg1})
+		arg1 context.Context
+		arg2 worker.ArtifactDestination
+	}{arg1, arg2})
+	fake.recordInvocation("StreamTo", []interface{}{arg1, arg2})
 	fake.streamToMutex.Unlock()
 	if fake.StreamToStub != nil {
-		return fake.StreamToStub(arg1)
+		return fake.StreamToStub(arg1, arg2)
 	}
 	if specificReturn {
 		return ret.result1
@@ -129,11 +132,11 @@ func (fake *FakeArtifactSource) StreamToCallCount() int {
 	return len(fake.streamToArgsForCall)
 }
 
-func (fake *FakeArtifactSource) StreamToArgsForCall(i int) worker.ArtifactDestination {
+func (fake *FakeArtifactSource) StreamToArgsForCall(i int) (context.Context, worker.ArtifactDestination) {
 	fake.streamToMutex.RLock()
 	defer fake.streamToMutex.RUnlock()
 	argsForCall := fake.streamToArgsForCall[i]
-	return argsForCall.arg1
+	return argsForCall.arg1, argsForCall.arg2
 }
 
 func (fake *FakeArtifactSource) StreamToReturns(result1 error) {

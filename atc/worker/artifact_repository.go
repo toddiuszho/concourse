@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"strings"
@@ -68,7 +69,7 @@ func (repo *ArtifactRepository) StreamTo(dest ArtifactDestination) error {
 	repo.repoL.RUnlock()
 
 	for name, src := range sources {
-		err := src.StreamTo(subdirectoryDestination{dest, string(name)})
+		err := src.StreamTo(context.TODO(), subdirectoryDestination{dest, string(name)})
 		if err != nil {
 			return err
 		}

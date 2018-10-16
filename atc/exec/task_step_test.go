@@ -838,7 +838,7 @@ var _ = Describe("TaskStep", func() {
 								})
 
 								It("streams the data from the volumes to the destination", func() {
-									err := artifactSource1.StreamTo(fakeDestination)
+									err := artifactSource1.StreamTo(context.TODO(), fakeDestination)
 									Expect(err).NotTo(HaveOccurred())
 
 									Expect(fakeVolume1.StreamOutCallCount()).To(Equal(1))

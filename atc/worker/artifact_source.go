@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"context"
 	"io"
 )
 
@@ -12,7 +13,7 @@ type ArtifactSource interface {
 	// StreamTo copies the data from the source to the destination. Note that
 	// this potentially uses a lot of network transfer, for larger artifacts, as
 	// the ATC will effectively act as a middleman.
-	StreamTo(ArtifactDestination) error
+	StreamTo(context.Context, ArtifactDestination) error
 
 	// StreamFile returns the contents of a single file in the artifact source.
 	// This is used for loading a task's configuration at runtime.

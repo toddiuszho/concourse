@@ -422,7 +422,7 @@ func (p *containerProvider) createGardenContainer(
 				return nil, err
 			}
 
-			err = inputSource.Source().StreamTo(inputVolume)
+			err = inputSource.Source().StreamTo(context.TODO(), inputVolume)
 			if err != nil {
 				return nil, err
 			}

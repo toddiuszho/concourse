@@ -238,7 +238,7 @@ func (s *getArtifactSource) VolumeOn(worker worker.Worker) (worker.Volume, bool,
 }
 
 // StreamTo streams the resource's data to the destination.
-func (s *getArtifactSource) StreamTo(destination worker.ArtifactDestination) error {
+func (s *getArtifactSource) StreamTo(ctx context.Context, destination worker.ArtifactDestination) error {
 	out, err := s.versionedSource.StreamOut(".")
 	if err != nil {
 		return err

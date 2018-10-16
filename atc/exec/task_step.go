@@ -451,7 +451,7 @@ func newTaskArtifactSource(
 	}
 }
 
-func (src *taskArtifactSource) StreamTo(destination worker.ArtifactDestination) error {
+func (src *taskArtifactSource) StreamTo(ctx context.Context, destination worker.ArtifactDestination) error {
 	out, err := src.volume.StreamOut(".")
 	if err != nil {
 		return err
@@ -552,7 +552,7 @@ func newTaskCacheSource(
 	}
 }
 
-func (src *taskCacheSource) StreamTo(destination worker.ArtifactDestination) error {
+func (src *taskCacheSource) StreamTo(ctx context.Context, destination worker.ArtifactDestination) error {
 	// cache will be initialized every time on a new worker
 	return nil
 }
