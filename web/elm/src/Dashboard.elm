@@ -392,7 +392,7 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
     Html.div [ class "page" ]
-        [ (Html.map TopBarMsg << Html.fromUnstyled) (NewTopBar.view model.topBar)
+        [ (Html.map TopBarMsg) (NewTopBar.view model.topBar)
         , dashboardView model
         ]
 

@@ -1,9 +1,7 @@
 module NewTopBar
     exposing
         ( Model
-        , ScreenSize(..)
         , Msg(FilterMsg, KeyDown, LoggedOut, UserFetched, ShowSearchInput, BlurMsg, Noop, ScreenResized)
-        , MobileState(..)
         , fetchUser
         , init
         , update
@@ -15,18 +13,21 @@ import Concourse
 import Concourse.Team
 import Concourse.User
 import Dom
-import Html exposing (Html)
-import Html.Attributes exposing (class, classList, href, id, placeholder, src, type_, value)
-import Html.Events exposing (..)
+import Html.Styled as Html exposing (Html)
+import Html.Styled.Attributes as HA exposing (css, class, classList, href, id, placeholder, src, type_, value)
+import Html.Styled.Events exposing (..)
 import Http
 import Keyboard
 import LoginRedirect
+import MobileState exposing (MobileState(..))
 import Navigation
+import NewTopBar.Styles as Styles
 import QueryString
 import RemoteData exposing (RemoteData)
 import Task
 import TopBar exposing (userDisplayName)
 import UserState exposing (UserState(..))
+import ScreenSize exposing (ScreenSize(..))
 import Window
 
 
@@ -42,16 +43,6 @@ type alias Model =
     , screenSize : ScreenSize
     , mobileSearchState : MobileState
     }
-
-
-type ScreenSize
-    = Mobile
-    | Desktop
-
-
-type MobileState
-    = Expanded
-    | Collapsed
 
 
 type Msg
@@ -262,7 +253,7 @@ viewUserState userState userMenuVisible =
             Html.div [ class "user-id", onClick LogIn ]
                 [ Html.a
                     [ href "/sky/login"
-                    , Html.Attributes.attribute "aria-label" "Log In"
+                    , HA.attribute "aria-label" "Log In"
                     , class "login-button"
                     ]
                     [ Html.text "login"
@@ -277,7 +268,7 @@ viewUserState userState userMenuVisible =
                     ]
                 , Html.div [ classList [ ( "user-menu", True ), ( "hidden", not userMenuVisible ) ], onClick LogOut ]
                     [ Html.a
-                        [ Html.Attributes.attribute "aria-label" "Log Out"
+                        [ HA.attribute "aria-label" "Log Out"
                         ]
                         [ Html.text "logout"
                         ]
@@ -285,89 +276,86 @@ viewUserState userState userMenuVisible =
                 ]
 
 
-searchBar : Model -> Html Msg
+searchBar : Model -> List (Html Msg)
 searchBar model =
-    Html.div [ class "topbar-search-form" ]
-        [ Html.input
-            [ class "search-input-field"
-            , id "search-input-field"
-            , type_ "text"
-            , placeholder "search"
-            , onInput FilterMsg
-            , onFocus FocusMsg
-            , onBlur BlurMsg
-            , value model.query
-            ]
-            []
-        , Html.span
-            [ classList [ ( "search-clear-button", True ), ( "active", not <| String.isEmpty model.query ) ]
-            , id "search-clear-button"
-            , onClick (FilterMsg "")
-            ]
-            []
+    [ Html.input
+        [ id "search-input-field"
+        , type_ "text"
+        , placeholder "search"
+        , onInput FilterMsg
+        , onFocus FocusMsg
+        , onBlur BlurMsg
+        , value model.query
+        , css (Styles.searchInput model.screenSize)
         ]
+        []
+    , Html.span
+        [ classList [ ( "search-clear-button", True ), ( "active", not <| String.isEmpty model.query ) ]
+        , id "search-clear-button"
+        , onClick (FilterMsg "")
+        ]
+        []
+    ]
 
 
 view : Model -> Html Msg
 view model =
-    Html.div [ class "module-topbar" ]
-        [ Html.div [ class "topbar-logo" ] [ Html.a [ class "logo-image-link", href "#" ] [] ]
-        , Html.div [ class "topbar-login" ]
-            (case model.screenSize of
-                Desktop ->
-                    [ Html.div [ class "topbar-user-info" ]
-                        [ viewUserState model.userState model.userMenuVisible
+    Html.div
+        [ css Styles.topBar ]
+        ([ Html.a
+            [ css Styles.concourseLogo, href "#" ]
+            []
+         , Html.div
+            [ classList [ ( "hidden", not model.showSearch ) ]
+            , css (Styles.searchBar model)
+            ]
+            ((case ( model.screenSize, model.mobileSearchState ) of
+                ( Mobile, Collapsed ) ->
+                    [ Html.a
+                        [ class "search-btn"
+                        , onClick ShowSearchInput
+                        , css Styles.searchButton
                         ]
+                        []
                     ]
 
-                Mobile ->
-                    case model.mobileSearchState of
-                        Collapsed ->
-                            [ Html.div [ class "topbar-user-info" ]
-                                [ viewUserState model.userState model.userMenuVisible
-                                ]
-                            ]
-
-                        Expanded ->
-                            []
-            )
-        , Html.div [ classList [ ( "topbar-search", True ), ( "hidden", not model.showSearch ) ] ]
-            [ (case model.screenSize of
-                Desktop ->
+                _ ->
                     searchBar model
+             )
+                ++ [ Html.ul
+                        [ classList [ ( "hidden", not model.showAutocomplete ), ( "search-options", True ) ]
+                        , css Styles.searchOptionsList
+                        ]
+                     <|
+                        let
+                            options =
+                                autocompleteOptions model
+                        in
+                            List.indexedMap
+                                (\index option ->
+                                    let
+                                        active =
+                                            model.selectionMade && index == (model.selection - 1) % List.length options
+                                    in
+                                        Html.li
+                                            [ onMouseDown (FilterMsg option)
+                                            , onMouseOver (SelectMsg index)
+                                            , css (Styles.searchOption { screenSize = model.screenSize, active = active })
+                                            ]
+                                            [ Html.text option ]
+                                )
+                                options
+                   ]
+            )
+         ]
+            ++ (case ( model.screenSize, model.mobileSearchState ) of
+                    ( Mobile, Expanded ) ->
+                        []
 
-                Mobile ->
-                    case model.mobileSearchState of
-                        Collapsed ->
-                            Html.button
-                                [ class "search-btn"
-                                , onClick ShowSearchInput
-                                ]
-                                []
-
-                        Expanded ->
-                            searchBar model
-              )
-            , Html.ul [ classList [ ( "hidden", not model.showAutocomplete ), ( "search-options", True ) ] ] <|
-                let
-                    options =
-                        autocompleteOptions model
-                in
-                    List.indexedMap
-                        (\index option ->
-                            Html.li
-                                [ classList
-                                    [ ( "search-option", True )
-                                    , ( "active", model.selectionMade && index == (model.selection - 1) % List.length options )
-                                    ]
-                                , onMouseDown (FilterMsg option)
-                                , onMouseOver (SelectMsg index)
-                                ]
-                                [ Html.text option ]
-                        )
-                        options
-            ]
-        ]
+                    _ ->
+                        [ Html.div [ css Styles.userInfo ] [ viewUserState model.userState model.userMenuVisible ] ]
+               )
+        )
 
 
 fetchUser : Cmd Msg
