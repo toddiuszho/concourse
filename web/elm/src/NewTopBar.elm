@@ -15,7 +15,7 @@ import Concourse.Team
 import Concourse.User
 import Dom
 import Html.Styled as Html exposing (Html)
-import Html.Styled.Attributes as HA exposing (css, class, classList, href, id, placeholder, src, type_, value)
+import Html.Styled.Attributes as HA exposing (css, href, id, placeholder, src, type_, value)
 import Html.Styled.Events exposing (..)
 import Http
 import Keyboard
@@ -348,7 +348,7 @@ viewUserState { userState, userMenuVisible } =
             [ Html.div
                 [ href "/sky/login"
                 , HA.attribute "aria-label" "Log In"
-                , class "login-button"
+                , id "login-button"
                 , onClick LogIn
                 , css Styles.menuButton
                 ]
@@ -357,7 +357,7 @@ viewUserState { userState, userMenuVisible } =
 
         UserStateLoggedIn user ->
             [ Html.div
-                [ class "user-id"
+                [ id "user-id"
                 , onClick ToggleUserMenu
                 , css Styles.menuButton
                 ]
@@ -425,7 +425,7 @@ viewMiddleSection model =
         Collapsed ->
             [ Html.div [ css <| Styles.middleSection model.searchBar ]
                 [ Html.a
-                    [ class "search-btn"
+                    [ id "search-btn"
                     , onClick ShowSearchInput
                     , css Styles.searchButton
                     ]

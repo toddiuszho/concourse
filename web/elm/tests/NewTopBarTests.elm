@@ -6,7 +6,7 @@ import Html.Attributes as Attributes
 import Html.Styled as HS
 import Test exposing (..)
 import Test.Html.Query as Query
-import Test.Html.Selector as THS exposing (tag, attribute, class, text, containing)
+import Test.Html.Selector as THS exposing (tag, attribute, id, text, containing)
 import Test.Html.Event as Event
 import NewTopBar
 import RemoteData
@@ -40,7 +40,7 @@ all =
                 \_ ->
                     smallScreen
                         |> queryView
-                        |> Query.findAll [ class "search-btn" ]
+                        |> Query.findAll [ id "search-btn" ]
                         |> Query.count (Expect.equal 1)
             , test "shows no search bar on high density" <|
                 \_ ->
@@ -104,7 +104,7 @@ all =
                                     )
                                 )
                             |> queryView
-                            |> Query.find [ class "user-id", containing [ text "some-user" ] ]
+                            |> Query.find [ id "user-id", containing [ text "some-user" ] ]
                             |> Event.simulate Event.click
                             |> Event.expect NewTopBar.ToggleUserMenu
                     )
@@ -150,7 +150,7 @@ all =
                 (\_ ->
                     smallScreen
                         |> queryView
-                        |> Query.find [ class "search-btn" ]
+                        |> Query.find [ id "search-btn" ]
                         |> Event.simulate Event.click
                         |> Event.expect NewTopBar.ShowSearchInput
                 )
@@ -160,7 +160,7 @@ all =
                         smallScreen
                             |> updateModel NewTopBar.ShowSearchInput
                             |> queryView
-                            |> Query.findAll [ class "search-btn" ]
+                            |> Query.findAll [ id "search-btn" ]
                             |> Query.count (Expect.equal 0)
                     )
                 , test "shows the search bar"
@@ -230,7 +230,7 @@ all =
                             |> updateModel NewTopBar.ShowSearchInput
                             |> updateModel NewTopBar.BlurMsg
                             |> queryView
-                            |> Query.findAll [ class "search-btn" ]
+                            |> Query.findAll [ id "search-btn" ]
                             |> Query.count (Expect.equal 1)
                     )
                 , test "shows the user info/logout button"
