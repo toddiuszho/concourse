@@ -59,7 +59,7 @@ func (repo *ArtifactRepository) SourceFor(name ArtifactName) (ArtifactSource, bo
 //
 // Each ArtifactSource will be streamed to a subdirectory matching its
 // ArtifactName.
-func (repo *ArtifactRepository) StreamTo(dest ArtifactDestination) error {
+func (repo *ArtifactRepository) StreamTo(ctx context.Context, dest ArtifactDestination) error {
 	sources := map[ArtifactName]ArtifactSource{}
 
 	repo.repoL.RLock()

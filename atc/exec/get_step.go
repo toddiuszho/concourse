@@ -239,19 +239,19 @@ func (s *getArtifactSource) VolumeOn(worker worker.Worker) (worker.Volume, bool,
 
 // StreamTo streams the resource's data to the destination.
 func (s *getArtifactSource) StreamTo(ctx context.Context, destination worker.ArtifactDestination) error {
-	out, err := s.versionedSource.StreamOut(".")
+	out, err := s.versionedSource.StreamOut(ctx, ".")
 	if err != nil {
 		return err
 	}
 
 	defer out.Close()
 
-	return destination.StreamIn(".", out)
+	return destination.StreamIn(ctx, ".", out)
 }
 
 // StreamFile streams a single file out of the resource.
-func (s *getArtifactSource) StreamFile(path string) (io.ReadCloser, error) {
-	out, err := s.versionedSource.StreamOut(path)
+func (s *getArtifactSource) StreamFile(ctx context.Context, path string) (io.ReadCloser, error) {
+	out, err := s.versionedSource.StreamOut(ctx, path)
 	if err != nil {
 		return nil, err
 	}

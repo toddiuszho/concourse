@@ -2,6 +2,7 @@ package worker_test
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"io"
 
@@ -87,7 +88,7 @@ var _ = Describe("ArtifactRepository", func() {
 				})
 
 				JustBeforeEach(func() {
-					streamErr = repo.StreamTo(fakeDestination)
+					streamErr = repo.StreamTo(context.TODO(), fakeDestination)
 				})
 
 				It("succeeds", func() {
@@ -100,8 +101,8 @@ var _ = Describe("ArtifactRepository", func() {
 					Expect(firstSource.StreamToCallCount()).To(Equal(1))
 					Expect(secondSource.StreamToCallCount()).To(Equal(1))
 
-					firstDestination := firstSource.StreamToArgsForCall(0)
-					secondDestination := secondSource.StreamToArgsForCall(0)
+					_, firstDestination := firstSource.StreamToArgsForCall(0)
+					_, secondDestination := secondSource.StreamToArgsForCall(0)
 
 					Expect(firstDestination.StreamIn("foo", someStream)).To(Succeed())
 

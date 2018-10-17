@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"io"
 	"path"
 
@@ -15,8 +16,8 @@ type VersionedSource interface {
 	Version() atc.Version
 	Metadata() []atc.MetadataField
 
-	StreamOut(string) (io.ReadCloser, error)
-	StreamIn(string, io.Reader) error
+	StreamOut(context.Context, string) (io.ReadCloser, error)
+	StreamIn(context.Context, string, io.Reader) error
 
 	Volume() worker.Volume
 }
@@ -43,7 +44,7 @@ func (vs *putVersionedSource) Metadata() []atc.MetadataField {
 	return vs.versionResult.Metadata
 }
 
-func (vs *putVersionedSource) StreamOut(src string) (io.ReadCloser, error) {
+func (vs *putVersionedSource) StreamOut(ctx context.Context, src string) (io.ReadCloser, error) {
 	return vs.container.StreamOut(garden.StreamOutSpec{
 		// don't use path.Join; it strips trailing slashes
 		Path: vs.resourceDir + "/" + src,
@@ -54,7 +55,7 @@ func (vs *putVersionedSource) Volume() worker.Volume {
 	return nil
 }
 
-func (vs *putVersionedSource) StreamIn(dst string, src io.Reader) error {
+func (vs *putVersionedSource) StreamIn(ctx context.Context, dst string, src io.Reader) error {
 	return vs.container.StreamIn(garden.StreamInSpec{
 		Path:      path.Join(vs.resourceDir, dst),
 		TarStream: src,
@@ -88,7 +89,7 @@ func (vs *getVersionedSource) Metadata() []atc.MetadataField {
 	return vs.versionResult.Metadata
 }
 
-func (vs *getVersionedSource) StreamOut(src string) (io.ReadCloser, error) {
+func (vs *getVersionedSource) StreamOut(ctx context.Context, src string) (io.ReadCloser, error) {
 	readCloser, err := vs.volume.StreamOut(src)
 	if err != nil {
 		return nil, err
@@ -97,7 +98,7 @@ func (vs *getVersionedSource) StreamOut(src string) (io.ReadCloser, error) {
 	return readCloser, err
 }
 
-func (vs *getVersionedSource) StreamIn(dst string, src io.Reader) error {
+func (vs *getVersionedSource) StreamIn(ctx context.Context, dst string, src io.Reader) error {
 	return vs.volume.StreamIn(
 		path.Join(vs.resourceDir, dst),
 		src,

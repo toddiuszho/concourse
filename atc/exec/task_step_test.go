@@ -885,7 +885,7 @@ var _ = Describe("TaskStep", func() {
 										})
 
 										It("streams out the given path", func() {
-											reader, err := artifactSource1.StreamFile("some-path")
+											reader, err := artifactSource1.StreamFile(context.TODO(), "some-path")
 											Expect(err).NotTo(HaveOccurred())
 
 											Expect(ioutil.ReadAll(reader)).To(Equal([]byte(fileContent)))
@@ -896,7 +896,7 @@ var _ = Describe("TaskStep", func() {
 
 										Describe("closing the stream", func() {
 											It("closes the stream from the versioned source", func() {
-												reader, err := artifactSource1.StreamFile("some-path")
+												reader, err := artifactSource1.StreamFile(context.TODO(), "some-path")
 												Expect(err).NotTo(HaveOccurred())
 
 												Expect(tgzBuffer.Closed()).To(BeFalse())
@@ -911,7 +911,7 @@ var _ = Describe("TaskStep", func() {
 
 									Context("but the stream is empty", func() {
 										It("returns ErrFileNotFound", func() {
-											_, err := artifactSource1.StreamFile("some-path")
+											_, err := artifactSource1.StreamFile(context.TODO(), "some-path")
 											Expect(err).To(MatchError(exec.FileNotFoundError{Path: "some-path"}))
 										})
 									})
@@ -925,7 +925,7 @@ var _ = Describe("TaskStep", func() {
 									})
 
 									It("returns the error", func() {
-										_, err := artifactSource1.StreamFile("some-path")
+										_, err := artifactSource1.StreamFile(context.TODO(), "some-path")
 										Expect(err).To(Equal(disaster))
 									})
 								})
