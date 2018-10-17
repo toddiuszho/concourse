@@ -101,12 +101,19 @@ func (step *PutStep) Run(ctx context.Context, state RunState) error {
 		Env: step.stepMetadata.Env(),
 	}
 
-	for name, source := range state.Artifacts().AsMap() {
-		containerSpec.Inputs = append(containerSpec.Inputs, &putInputSource{
-			name:   name,
-			source: PutResourceSource{source},
-		})
+	inputs, err := dsfst.InputsFrom(state.Artifacts())
+	if err != nil {
+		return err
 	}
+
+	containerSpec.Inputs = inputs
+
+	// for name, source := range artifacts {
+	// 	containerSpec.Inputs = append(containerSpec.Inputs, &putInputSource{
+	// 		name:   name,
+	// 		source: PutResourceSource{source},
+	// 	})
+	// }
 
 	putResource, err := step.resourceFactory.NewResource(
 		ctx,

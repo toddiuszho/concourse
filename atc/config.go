@@ -205,6 +205,13 @@ func (c *VersionConfig) MarshalJSON() ([]byte, error) {
 	return json.Marshal("")
 }
 
+// A InputsConfig represents the choice to include every artifact within the
+// job as an input to the put step or specific ones.
+type InputsConfig struct {
+	All       bool `yaml:"all,omitempty" json:"all,omitempty"`
+	Artifacts []string
+}
+
 // A PlanConfig is a flattened set of configuration corresponding to
 // a particular Plan, where Source and Version are populated lazily.
 type PlanConfig struct {
@@ -234,6 +241,9 @@ type PlanConfig struct {
 
 	// corresponding resource config, e.g. aws-stemcell
 	Resource string `yaml:"resource,omitempty" json:"resource,omitempty" mapstructure:"resource"`
+
+	// inputs to a put step either a list (e.g. [artifact-1, aritfact-2]) or all (e.g. all)
+	Inputs InputsConfig `yaml:"inputs,omitempty" json:"inputs,omitempty" mapstructure:"inputs"`
 
 	// corresponds to a Task plan
 	// name of 'task', e.g. unit, go1.3, go1.4

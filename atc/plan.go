@@ -1,5 +1,7 @@
 package atc
 
+import "fmt"
+
 type Plan struct {
 	ID       PlanID `json:"id"`
 	Attempts []int  `json:"attempts,omitempty"`
@@ -82,12 +84,13 @@ type GetPlan struct {
 }
 
 type PutPlan struct {
-	Type     string `json:"type"`
-	Name     string `json:"name,omitempty"`
-	Resource string `json:"resource"`
-	Source   Source `json:"source"`
-	Params   Params `json:"params,omitempty"`
-	Tags     Tags   `json:"tags,omitempty"`
+	Type     string   `json:"type"`
+	Name     string   `json:"name,omitempty"`
+	Resource string   `json:"resource"`
+	Source   Source   `json:"source"`
+	Params   Params   `json:"params,omitempty"`
+	Tags     Tags     `json:"tags,omitempty"`
+	Inputs   []string `json:"inputs,omitempty"`
 
 	VersionedResourceTypes VersionedResourceTypes `json:"resource_types,omitempty"`
 }
@@ -115,4 +118,51 @@ type DependentGetPlan struct {
 	Type     string `json:"type"`
 	Name     string `json:"name,omitempty"`
 	Resource string `json:"resource"`
+}
+
+type PutInputNotFoundError struct {
+	Input string
+}
+
+func (e PutInputNotFoundError) Error() string {
+	return fmt.Sprintf("put input not found within artifacts: %s", e.Input)
+}
+
+type PutInputs interface {
+	Inputs(worker.ArtifactRepository) ([]worker.InputSource, error)
+}
+
+type allInputs struct{}
+
+func NewAllInputs() PutInputs {
+	return &allInputs{}
+}
+
+func (i allInputs) IncludeInput(artifact string) bool {
+	return true
+}
+
+type specificInputs struct {
+	inputs []string
+}
+
+func (i specificInputs) IncludeInput(artifact string) bool {
+	putInputs := []string{}
+	for _, i := range i.inputs {
+		bad := false
+
+		for _, a := range artifacts {
+			if i == a {
+				putInputs = append(putInputs, i)
+				bad = true
+				break
+			}
+		}
+
+		if bad == false {
+			return nil, PutInputNotFoundError{Input: i}
+		}
+	}
+
+	return putInputs, nil
 }

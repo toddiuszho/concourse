@@ -12,6 +12,7 @@ import (
 
 const VersionLatest = "latest"
 const VersionEvery = "every"
+const InputsAll = "all"
 const MemoryRegex = "^([0-9]+)([G|M|K|g|m|k]?[b|B])?$"
 
 var VersionConfigDecodeHook = func(
@@ -166,6 +167,38 @@ var ContainerLimitsParser = func(data interface{}) (ContainerLimits, error) {
 	}
 
 	return c, nil
+}
+
+var InputsConfigDecodeHook = func(
+	srcType reflect.Type,
+	dstType reflect.Type,
+	data interface{},
+) (interface{}, error) {
+	if dstType != reflect.TypeOf(InputsConfig{}) {
+		return data, nil
+	}
+
+	switch {
+	case srcType.Kind() == reflect.String:
+		if s, ok := data.(string); ok {
+			return InputsConfig{
+				All: s == InputsAll,
+			}, nil
+		}
+	case srcType.Kind() == reflect.Slice:
+		inputs := []string{}
+		if inputsConfig, ok := data.([]string); ok {
+			for _, input := range inputsConfig {
+				inputs = append(inputs, strings.TrimSpace(input))
+			}
+
+			return InputsConfig{
+				Artifacts: inputs,
+			}, nil
+		}
+	}
+
+	return data, nil
 }
 
 func sanitize(root interface{}) (interface{}, error) {

@@ -215,7 +215,7 @@ var _ = Describe("Factory Put", func() {
 
 				expected := expectedPlanFactory.NewPlan(atc.OnSuccessPlan{
 					Step: expectedPlanFactory.NewPlan(atc.TaskPlan{
-						Name:                   "some-task",
+						Name: "some-task",
 						VersionedResourceTypes: resourceTypes,
 					}),
 
@@ -271,7 +271,7 @@ var _ = Describe("Factory Put", func() {
 
 				expected := expectedPlanFactory.NewPlan(atc.AggregatePlan{
 					expectedPlanFactory.NewPlan(atc.TaskPlan{
-						Name:                   "some thing",
+						Name: "some thing",
 						VersionedResourceTypes: resourceTypes,
 					}),
 					expectedPlanFactory.NewPlan(atc.OnSuccessPlan{
@@ -323,7 +323,7 @@ var _ = Describe("Factory Put", func() {
 
 				expected := expectedPlanFactory.NewPlan(atc.DoPlan{
 					expectedPlanFactory.NewPlan(atc.TaskPlan{
-						Name:                   "some-task",
+						Name: "some-task",
 						VersionedResourceTypes: resourceTypes,
 					}),
 					expectedPlanFactory.NewPlan(atc.OnSuccessPlan{
@@ -376,7 +376,7 @@ var _ = Describe("Factory Put", func() {
 
 				expectedPlan := expectedPlanFactory.NewPlan(atc.DoPlan{
 					expectedPlanFactory.NewPlan(atc.TaskPlan{
-						Name:                   "those who resist our will",
+						Name: "those who resist our will",
 						VersionedResourceTypes: resourceTypes,
 					}),
 					expectedPlanFactory.NewPlan(atc.OnSuccessPlan{
@@ -393,7 +393,7 @@ var _ = Describe("Factory Put", func() {
 						}),
 					}),
 					expectedPlanFactory.NewPlan(atc.TaskPlan{
-						Name:                   "some-other-task",
+						Name: "some-other-task",
 						VersionedResourceTypes: resourceTypes,
 					}),
 				})
@@ -402,6 +402,93 @@ var _ = Describe("Factory Put", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(actual).To(testhelpers.MatchPlan(expectedPlan))
+			})
+		})
+
+		Context("when I have a put specifying inputs", func() {
+			BeforeEach(func() {
+				input = atc.JobConfig{
+					Plan: atc.PlanSequence{
+						{
+							Put:      "some-put",
+							Resource: "some-resource",
+							Inputs:   atc.InputsConfig{Artifacts: []string{"input-1", "input-2"}},
+						},
+					},
+				}
+			})
+
+			It("returns the correct plan with inputs specified", func() {
+				actual, err := buildFactory.Create(input, resources, resourceTypes, nil)
+				Expect(err).NotTo(HaveOccurred())
+
+				putPlan := expectedPlanFactory.NewPlan(atc.PutPlan{
+					Type:     "git",
+					Name:     "some-put",
+					Resource: "some-resource",
+					Inputs:   []string{"input-1", "input-2"},
+					Source: atc.Source{
+						"uri": "git://some-resource",
+					},
+					VersionedResourceTypes: resourceTypes,
+				})
+				expected := expectedPlanFactory.NewPlan(atc.OnSuccessPlan{
+					Step: putPlan,
+					Next: expectedPlanFactory.NewPlan(atc.GetPlan{
+						Type:     "git",
+						Name:     "some-put",
+						Resource: "some-resource",
+						Source: atc.Source{
+							"uri": "git://some-resource",
+						},
+						VersionFrom:            &putPlan.ID,
+						VersionedResourceTypes: resourceTypes,
+					}),
+				})
+				Expect(actual).To(testhelpers.MatchPlan(expected))
+			})
+		})
+
+		Context("when I have a put specifying all inputs", func() {
+			BeforeEach(func() {
+				input = atc.JobConfig{
+					Plan: atc.PlanSequence{
+						{
+							Put:      "some-put",
+							Resource: "some-resource",
+							Inputs:   atc.InputsConfig{All: true},
+						},
+					},
+				}
+			})
+
+			It("returns the correct plan without inputs specified", func() {
+				actual, err := buildFactory.Create(input, resources, resourceTypes, nil)
+				Expect(err).NotTo(HaveOccurred())
+
+				putPlan := expectedPlanFactory.NewPlan(atc.PutPlan{
+					Type:     "git",
+					Name:     "some-put",
+					Resource: "some-resource",
+					Source: atc.Source{
+						"uri": "git://some-resource",
+					},
+					VersionedResourceTypes: resourceTypes,
+				})
+				expected := expectedPlanFactory.NewPlan(atc.OnSuccessPlan{
+					Step: putPlan,
+					Next: expectedPlanFactory.NewPlan(atc.GetPlan{
+						Type:     "git",
+						Name:     "some-put",
+						Resource: "some-resource",
+						Source: atc.Source{
+							"uri": "git://some-resource",
+						},
+						VersionFrom:            &putPlan.ID,
+						VersionedResourceTypes: resourceTypes,
+					}),
+				})
+				Expect(actual).To(testhelpers.MatchPlan(expected))
 			})
 		})
 	})
