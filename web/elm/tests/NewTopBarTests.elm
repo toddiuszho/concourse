@@ -81,8 +81,7 @@ all =
                 [ test "hides the search button"
                     (\_ ->
                         smallScreen
-                            |> NewTopBar.update NewTopBar.ShowSearchInput
-                            |> Tuple.first
+                            |> updateModel NewTopBar.ShowSearchInput
                             |> queryView
                             |> Query.findAll [ class "search-btn" ]
                             |> Query.count (Expect.equal 0)
@@ -90,8 +89,7 @@ all =
                 , test "shows the search bar"
                     (\_ ->
                         smallScreen
-                            |> NewTopBar.update NewTopBar.ShowSearchInput
-                            |> Tuple.first
+                            |> updateModel NewTopBar.ShowSearchInput
                             |> queryView
                             |> Query.findAll [ tag "input" ]
                             |> Query.count (Expect.equal 1)
@@ -118,8 +116,7 @@ all =
                 , test "sends a BlurMsg message when the search input is blurred"
                     (\_ ->
                         smallScreen
-                            |> NewTopBar.update NewTopBar.ShowSearchInput
-                            |> Tuple.first
+                            |> updateModel NewTopBar.ShowSearchInput
                             |> queryView
                             |> Query.find [ tag "input" ]
                             |> Event.simulate Event.blur
@@ -130,10 +127,8 @@ all =
                 [ test "hides the search bar"
                     (\_ ->
                         smallScreen
-                            |> NewTopBar.update NewTopBar.ShowSearchInput
-                            |> Tuple.first
-                            |> NewTopBar.update NewTopBar.BlurMsg
-                            |> Tuple.first
+                            |> updateModel NewTopBar.ShowSearchInput
+                            |> updateModel NewTopBar.BlurMsg
                             |> queryView
                             |> Query.findAll [ tag "input" ]
                             |> Query.count (Expect.equal 0)
@@ -141,10 +136,8 @@ all =
                 , test "shows the search button"
                     (\_ ->
                         smallScreen
-                            |> NewTopBar.update NewTopBar.ShowSearchInput
-                            |> Tuple.first
-                            |> NewTopBar.update NewTopBar.BlurMsg
-                            |> Tuple.first
+                            |> updateModel NewTopBar.ShowSearchInput
+                            |> updateModel NewTopBar.BlurMsg
                             |> queryView
                             |> Query.findAll [ class "search-btn" ]
                             |> Query.count (Expect.equal 1)
@@ -169,6 +162,17 @@ all =
                             |> Query.has [ text "some-user" ]
                     )
                 ]
+            , describe "on FilterMsg -- this is a bullshit testcase"
+                [ test "shows the search bar"
+                    (\_ ->
+                        smallScreen
+                            |> updateModel NewTopBar.ShowSearchInput
+                            |> updateModel NewTopBar.BlurMsg
+                            |> queryView
+                            |> Query.findAll [ tag "input" ]
+                            |> Query.count (Expect.equal 1)
+                    )
+                ]
             ]
         , describe "on large screens"
             [ test "shows the entire search input on large screens"
@@ -183,8 +187,7 @@ all =
                 (\_ ->
                     NewTopBar.init True ""
                         |> Tuple.first
-                        |> NewTopBar.update (NewTopBar.ScreenResized { width = 300, height = 800 })
-                        |> Tuple.first
+                        |> updateModel (NewTopBar.ScreenResized { width = 300, height = 800 })
                         |> queryView
                         |> Query.findAll [ tag "input" ]
                         |> Query.count (Expect.equal 0)
