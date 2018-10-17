@@ -6,20 +6,18 @@ import Html.Attributes as Attributes
 import Html.Styled as HS
 import Test exposing (..)
 import Test.Html.Query as Query
-import Test.Html.Selector as THS exposing (tag, attribute, class, text)
+import Test.Html.Selector as THS exposing (tag, attribute, class, text, containing)
 import Test.Html.Event as Event
 import NewTopBar
 import RemoteData
-import ScreenSize exposing (ScreenSize(..))
 
 
 smallScreen : NewTopBar.Model
 smallScreen =
-    let
-        model =
-            Tuple.first (NewTopBar.init True "")
-    in
-        { model | screenSize = Mobile }
+    NewTopBar.init True ""
+        |> Tuple.first
+        |> updateModel
+            (NewTopBar.ScreenResized { width = 300, height = 800 })
 
 
 queryView : NewTopBar.Model -> Query.Single NewTopBar.Msg
@@ -38,36 +36,115 @@ all : Test
 all =
     describe "NewTopBarSearchInput"
         [ describe "on small screens"
-            [ test "shows the search icon"
-                (\_ ->
+            [ test "shows the search icon" <|
+                \_ ->
                     smallScreen
                         |> queryView
                         |> Query.findAll [ class "search-btn" ]
                         |> Query.count (Expect.equal 1)
-                )
-            , test "shows the user info/logout button"
-                (\_ ->
-                    smallScreen
+            , test "shows no search bar on high density" <|
+                \_ ->
+                    NewTopBar.init False ""
+                        |> Tuple.first
                         |> updateModel
-                            (NewTopBar.UserFetched
-                                (RemoteData.Success
-                                    { id = "some-user"
-                                    , userName = "some-user"
-                                    , name = "some-user"
-                                    , email = "some-user"
-                                    , teams = Dict.empty
-                                    }
-                                )
+                            (NewTopBar.ScreenResized
+                                { width = 300, height = 800 }
                             )
                         |> queryView
-                        |> Query.has [ text "some-user" ]
-                )
+                        |> Query.findAll [ tag "input" ]
+                        |> Query.count (Expect.equal 0)
+            , describe "when logged in"
+                [ test "shows the user's name"
+                    (\_ ->
+                        smallScreen
+                            |> updateModel
+                                (NewTopBar.UserFetched
+                                    (RemoteData.Success
+                                        { id = "some-user"
+                                        , userName = "some-user"
+                                        , name = "some-user"
+                                        , email = "some-user"
+                                        , teams = Dict.empty
+                                        }
+                                    )
+                                )
+                            |> queryView
+                            |> Query.has [ text "some-user" ]
+                    )
+                , test "does not show logout button"
+                    (\_ ->
+                        smallScreen
+                            |> updateModel
+                                (NewTopBar.UserFetched
+                                    (RemoteData.Success
+                                        { id = "some-user"
+                                        , userName = "some-user"
+                                        , name = "some-user"
+                                        , email = "some-user"
+                                        , teams = Dict.empty
+                                        }
+                                    )
+                                )
+                            |> queryView
+                            |> Query.findAll [ text "logout" ]
+                            |> Query.count (Expect.equal 0)
+                    )
+                , test "clicking username sends ToggleUserMenu message"
+                    (\_ ->
+                        smallScreen
+                            |> updateModel
+                                (NewTopBar.UserFetched
+                                    (RemoteData.Success
+                                        { id = "some-user"
+                                        , userName = "some-user"
+                                        , name = "some-user"
+                                        , email = "some-user"
+                                        , teams = Dict.empty
+                                        }
+                                    )
+                                )
+                            |> queryView
+                            |> Query.find [ class "user-id", containing [ text "some-user" ] ]
+                            |> Event.simulate Event.click
+                            |> Event.expect NewTopBar.ToggleUserMenu
+                    )
+                , test "ToggleUserMenu message shows logout button"
+                    (\_ ->
+                        smallScreen
+                            |> updateModel
+                                (NewTopBar.UserFetched
+                                    (RemoteData.Success
+                                        { id = "some-user"
+                                        , userName = "some-user"
+                                        , name = "some-user"
+                                        , email = "some-user"
+                                        , teams = Dict.empty
+                                        }
+                                    )
+                                )
+                            |> updateModel NewTopBar.ToggleUserMenu
+                            |> queryView
+                            |> Query.findAll [ text "logout" ]
+                            |> Query.count (Expect.equal 1)
+                    )
+                ]
             , test "shows no search input"
                 (\_ ->
                     smallScreen
                         |> queryView
                         |> Query.findAll [ tag "input" ]
                         |> Query.count (Expect.equal 0)
+                )
+            , test "shows search input when resizing"
+                (\_ ->
+                    smallScreen
+                        |> updateModel
+                            (NewTopBar.ScreenResized
+                                { width = 1200, height = 900 }
+                            )
+                        |> queryView
+                        |> Query.findAll [ tag "input" ]
+                        |> Query.count (Expect.equal 1)
                 )
             , test "sends a ShowSearchInput message when the search button is clicked"
                 (\_ ->
@@ -124,7 +201,7 @@ all =
                     )
                 ]
             , describe "on BlurMsg"
-                [ test "hides the search bar"
+                [ test "hides the search bar when there is no query"
                     (\_ ->
                         smallScreen
                             |> updateModel NewTopBar.ShowSearchInput
@@ -132,6 +209,20 @@ all =
                             |> queryView
                             |> Query.findAll [ tag "input" ]
                             |> Query.count (Expect.equal 0)
+                    )
+                , test "hides the autocomplete when there is a query"
+                    (\_ ->
+                        smallScreen
+                            |> updateModel NewTopBar.ShowSearchInput
+                            |> updateModel (NewTopBar.FilterMsg "status:")
+                            |> updateModel NewTopBar.BlurMsg
+                            |> queryView
+                            |> Expect.all
+                                [ Query.findAll [ tag "input" ]
+                                    >> Query.count (Expect.equal 1)
+                                , Query.findAll [ tag "ul" ]
+                                    >> Query.count (Expect.equal 0)
+                                ]
                     )
                 , test "shows the search button"
                     (\_ ->
@@ -162,12 +253,15 @@ all =
                             |> Query.has [ text "some-user" ]
                     )
                 ]
-            , describe "on FilterMsg -- this is a bullshit testcase"
-                [ test "shows the search bar"
+            , describe "starting with a query"
+                [ test "shows the search input on small screens"
                     (\_ ->
-                        smallScreen
-                            |> updateModel NewTopBar.ShowSearchInput
-                            |> updateModel NewTopBar.BlurMsg
+                        NewTopBar.init True "some-query"
+                            |> Tuple.first
+                            |> updateModel
+                                (NewTopBar.ScreenResized
+                                    { width = 300, height = 800 }
+                                )
                             |> queryView
                             |> Query.findAll [ tag "input" ]
                             |> Query.count (Expect.equal 1)
@@ -179,6 +273,10 @@ all =
                 (\_ ->
                     NewTopBar.init True ""
                         |> Tuple.first
+                        |> updateModel
+                            (NewTopBar.ScreenResized
+                                { width = 1200, height = 900 }
+                            )
                         |> queryView
                         |> Query.find [ tag "input" ]
                         |> Query.has [ attribute (Attributes.placeholder "search") ]
@@ -187,10 +285,28 @@ all =
                 (\_ ->
                     NewTopBar.init True ""
                         |> Tuple.first
-                        |> updateModel (NewTopBar.ScreenResized { width = 300, height = 800 })
+                        |> updateModel
+                            (NewTopBar.ScreenResized
+                                { width = 1200, height = 900 }
+                            )
+                        |> updateModel
+                            (NewTopBar.ScreenResized
+                                { width = 300, height = 800 }
+                            )
                         |> queryView
                         |> Query.findAll [ tag "input" ]
                         |> Query.count (Expect.equal 0)
                 )
+            , test "shows no search bar on high density" <|
+                \_ ->
+                    NewTopBar.init False ""
+                        |> Tuple.first
+                        |> updateModel
+                            (NewTopBar.ScreenResized
+                                { width = 1200, height = 900 }
+                            )
+                        |> queryView
+                        |> Query.findAll [ tag "input" ]
+                        |> Query.count (Expect.equal 0)
             ]
         ]

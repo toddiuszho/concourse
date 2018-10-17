@@ -26,6 +26,7 @@ import Monocle.Optional
 import Monocle.Lens
 import MonocleHelpers exposing (..)
 import NewTopBar
+import NewTopBar.Styles as NTBS
 import NoPipeline exposing (Msg, view)
 import Regex exposing (HowMany(All), regex, replace)
 import RemoteData
@@ -42,7 +43,7 @@ type alias Ports =
 
 
 type alias PinTeamConfig =
-    { pageHeaderClass : String
+    { pageHeaderHeight : Float
     , pageBodyClass : String
     , sectionHeaderClass : String
     , sectionClass : String
@@ -124,7 +125,7 @@ init ports flags =
             [ fetchData
             , Cmd.map TopBarMsg topBarMsg
             , pinTeamNames
-                { pageHeaderClass = "module-topbar"
+                { pageHeaderHeight = NTBS.pageHeaderHeight
                 , pageBodyClass = "dashboard"
                 , sectionClass = "dashboard-team-group"
                 , sectionHeaderClass = "dashboard-team-header"
@@ -412,7 +413,7 @@ dashboardView model =
                     [ Html.div [ class "dashboard-no-content", css [ Css.height (Css.pct 100) ] ] [ (Html.map (always Noop) << Html.fromUnstyled) NoPipeline.view ] ]
 
                 Ok substate ->
-                    [ Html.div [ class "dashboard-content" ] (pipelinesView substate model.topBar.query ++ [ footerView substate ]) ]
+                    [ Html.div [ class "dashboard-content" ] (pipelinesView substate (NewTopBar.query model.topBar) ++ [ footerView substate ]) ]
     in
         Html.div
             [ classList [ ( "dashboard", True ), ( "dashboard-hd", model.highDensity ) ] ]
