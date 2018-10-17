@@ -228,8 +228,8 @@ update msg model =
                 ( newModel, Cmd.none )
 
         KeyDown keycode ->
-            case model.searchBar of
-                Expanded r ->
+            case ( model.searchBar, keycode ) of
+                ( Expanded r, _ ) ->
                     if not r.showAutocomplete then
                         ( { model | searchBar = Expanded { r | selectionMade = False, selection = 0 } }, Cmd.none )
                     else
@@ -273,6 +273,21 @@ update msg model =
                             _ ->
                                 ( { model | searchBar = Expanded { r | selectionMade = False, selection = 0 } }, Cmd.none )
 
+                -- '/' key
+                ( Collapsed, 191 ) ->
+                    ( { model
+                        | searchBar =
+                            Expanded
+                                { query = ""
+                                , selectionMade = False
+                                , showAutocomplete = False
+                                , selection = 0
+                                , screenSize = Mobile
+                                }
+                      }
+                    , Task.attempt (always Noop) (Dom.focus "search-input-field")
+                    )
+
                 _ ->
                     ( model, Cmd.none )
 
@@ -280,39 +295,21 @@ update msg model =
             showSearchInput model
 
         ScreenResized size ->
-            let
-                newSize =
-                    getScreenSize size
+            case ( model.searchBar, getScreenSize size ) of
+                ( Expanded r, Mobile ) ->
+                    if String.isEmpty r.query then
+                        ( { model | searchBar = Collapsed }, Cmd.none )
+                    else
+                        ( { model | searchBar = Expanded { r | screenSize = Mobile } }, Cmd.none )
 
-                newModel =
-                    case ( model.searchBar, newSize ) of
-                        ( Expanded r, _ ) ->
-                            case ( r.screenSize, newSize ) of
-                                ( Desktop, Mobile ) ->
-                                    if String.isEmpty r.query then
-                                        { model | searchBar = Collapsed }
-                                    else
-                                        { model | searchBar = Expanded { r | screenSize = newSize } }
+                ( Expanded r, Desktop ) ->
+                    ( { model | searchBar = Expanded { r | screenSize = Desktop } }, Cmd.none )
 
-                                _ ->
-                                    { model | searchBar = Expanded { r | screenSize = newSize } }
+                ( Collapsed, Desktop ) ->
+                    showSearchInput model
 
-                        ( Collapsed, Desktop ) ->
-                            { model
-                                | searchBar =
-                                    Expanded
-                                        { query = ""
-                                        , selectionMade = False
-                                        , showAutocomplete = False
-                                        , selection = 0
-                                        , screenSize = Desktop
-                                        }
-                            }
-
-                        _ ->
-                            model
-            in
-                ( newModel, Cmd.none )
+                _ ->
+                    ( model, Cmd.none )
 
 
 showSearchInput : Model -> ( Model, Cmd Msg )
