@@ -1,4 +1,4 @@
-module NewTopBarTests exposing (all, init, queryView, smallScreen, updateModel)
+module NewTopBarTests exposing (all)
 
 import Dict
 import Expect
@@ -9,7 +9,14 @@ import RemoteData
 import Test exposing (..)
 import Test.Html.Event as Event
 import Test.Html.Query as Query
-import Test.Html.Selector as THS exposing (attribute, containing, id, tag, text)
+import Test.Html.Selector as THS
+    exposing
+        ( attribute
+        , containing
+        , id
+        , tag
+        , text
+        )
 
 
 init : { highDensity : Bool, query : String } -> NewTopBar.Model
@@ -22,6 +29,30 @@ smallScreen : NewTopBar.Model -> NewTopBar.Model
 smallScreen =
     updateModel <|
         NewTopBar.ScreenResized { width = 300, height = 800 }
+
+
+bigScreen : NewTopBar.Model -> NewTopBar.Model
+bigScreen =
+    updateModel <|
+        NewTopBar.ScreenResized { width = 1200, height = 900 }
+
+
+userName : String
+userName =
+    "some-user"
+
+
+loggedIn : NewTopBar.Model -> NewTopBar.Model
+loggedIn =
+    updateModel <|
+        NewTopBar.UserFetched <|
+            RemoteData.Success
+                { id = userName
+                , userName = userName
+                , name = userName
+                , email = userName
+                , teams = Dict.empty
+                }
 
 
 queryView : NewTopBar.Model -> Query.Single NewTopBar.Msg
@@ -53,6 +84,59 @@ all =
                             , Query.index 1
                                 >> Query.has [ text "team:" ]
                             ]
+            , test "typing status: shows all statuses" <|
+                \_ ->
+                    init { highDensity = False, query = "" }
+                        |> updateModel NewTopBar.FocusMsg
+                        |> updateModel (NewTopBar.FilterMsg "status:")
+                        |> queryView
+                        |> Query.findAll [ tag "li" ]
+                        |> Expect.all
+                            [ Query.count (Expect.equal 7)
+                            , Query.index 0
+                                >> Query.has [ text "status: paused" ]
+                            , Query.index 1
+                                >> Query.has [ text "status: pending" ]
+                            , Query.index 2
+                                >> Query.has [ text "status: failed" ]
+                            , Query.index 3
+                                >> Query.has [ text "status: errored" ]
+                            , Query.index 4
+                                >> Query.has [ text "status: aborted" ]
+                            , Query.index 5
+                                >> Query.has [ text "status: running" ]
+                            , Query.index 6
+                                >> Query.has [ text "status: succeeded" ]
+                            ]
+            , test "typing team: shows all teams" <|
+                \_ ->
+                    init { highDensity = False, query = "" }
+                        |> updateModel
+                            (NewTopBar.TeamsFetched
+                                (RemoteData.Success
+                                    [ { id = 0
+                                      , name = "some-team"
+                                      }
+                                    ]
+                                )
+                            )
+                        |> updateModel NewTopBar.FocusMsg
+                        |> updateModel (NewTopBar.FilterMsg "team:")
+                        |> queryView
+                        |> Query.findAll [ tag "li" ]
+                        |> Expect.all
+                            [ Query.count (Expect.equal 1)
+                            , Query.index 0
+                                >> Query.has [ text "team: some-team" ]
+                            ]
+            , test "typing anything else shows no autocomplete" <|
+                \_ ->
+                    init { highDensity = False, query = "" }
+                        |> updateModel NewTopBar.FocusMsg
+                        |> updateModel (NewTopBar.FilterMsg "anything-else")
+                        |> queryView
+                        |> Query.findAll [ tag "li" ]
+                        |> Query.count (Expect.equal 0)
             ]
         , describe "on small screens"
             [ test "shows the search icon" <|
@@ -60,15 +144,12 @@ all =
                     init { highDensity = False, query = "" }
                         |> smallScreen
                         |> queryView
-                        |> Query.findAll [ id "search-btn" ]
+                        |> Query.findAll [ id "search-button" ]
                         |> Query.count (Expect.equal 1)
             , test "shows no search bar on high density" <|
                 \_ ->
                     init { highDensity = True, query = "" }
-                        |> updateModel
-                            (NewTopBar.ScreenResized
-                                { width = 300, height = 800 }
-                            )
+                        |> smallScreen
                         |> queryView
                         |> Query.findAll [ tag "input" ]
                         |> Query.count (Expect.equal 0)
@@ -77,34 +158,14 @@ all =
                     \_ ->
                         init { highDensity = False, query = "" }
                             |> smallScreen
-                            |> updateModel
-                                (NewTopBar.UserFetched
-                                    (RemoteData.Success
-                                        { id = "some-user"
-                                        , userName = "some-user"
-                                        , name = "some-user"
-                                        , email = "some-user"
-                                        , teams = Dict.empty
-                                        }
-                                    )
-                                )
+                            |> loggedIn
                             |> queryView
-                            |> Query.has [ text "some-user" ]
+                            |> Query.has [ text userName ]
                 , test "does not show logout button" <|
                     \_ ->
                         init { highDensity = False, query = "" }
                             |> smallScreen
-                            |> updateModel
-                                (NewTopBar.UserFetched
-                                    (RemoteData.Success
-                                        { id = "some-user"
-                                        , userName = "some-user"
-                                        , name = "some-user"
-                                        , email = "some-user"
-                                        , teams = Dict.empty
-                                        }
-                                    )
-                                )
+                            |> loggedIn
                             |> queryView
                             |> Query.findAll [ text "logout" ]
                             |> Query.count (Expect.equal 0)
@@ -112,40 +173,33 @@ all =
                     \_ ->
                         init { highDensity = False, query = "" }
                             |> smallScreen
-                            |> updateModel
-                                (NewTopBar.UserFetched
-                                    (RemoteData.Success
-                                        { id = "some-user"
-                                        , userName = "some-user"
-                                        , name = "some-user"
-                                        , email = "some-user"
-                                        , teams = Dict.empty
-                                        }
-                                    )
-                                )
+                            |> loggedIn
                             |> queryView
-                            |> Query.find [ id "user-id", containing [ text "some-user" ] ]
+                            |> Query.find
+                                [ id "user-id"
+                                , containing [ text userName ]
+                                ]
                             |> Event.simulate Event.click
                             |> Event.expect NewTopBar.ToggleUserMenu
                 , test "ToggleUserMenu message shows logout button" <|
                     \_ ->
                         init { highDensity = False, query = "" }
                             |> smallScreen
-                            |> updateModel
-                                (NewTopBar.UserFetched
-                                    (RemoteData.Success
-                                        { id = "some-user"
-                                        , userName = "some-user"
-                                        , name = "some-user"
-                                        , email = "some-user"
-                                        , teams = Dict.empty
-                                        }
-                                    )
-                                )
+                            |> loggedIn
                             |> updateModel NewTopBar.ToggleUserMenu
                             |> queryView
                             |> Query.findAll [ text "logout" ]
                             |> Query.count (Expect.equal 1)
+                , test "clicking logout button sends LogOut message" <|
+                    \_ ->
+                        init { highDensity = False, query = "" }
+                            |> smallScreen
+                            |> loggedIn
+                            |> updateModel NewTopBar.ToggleUserMenu
+                            |> queryView
+                            |> Query.find [ id "logout-button" ]
+                            |> Event.simulate Event.click
+                            |> Event.expect NewTopBar.LogOut
                 ]
             , test "shows no search input" <|
                 \_ ->
@@ -170,7 +224,7 @@ all =
                     init { highDensity = False, query = "" }
                         |> smallScreen
                         |> queryView
-                        |> Query.find [ id "search-btn" ]
+                        |> Query.find [ id "search-button" ]
                         |> Event.simulate Event.click
                         |> Event.expect NewTopBar.ShowSearchInput
             , describe "on ShowSearchInput"
@@ -180,7 +234,7 @@ all =
                             |> smallScreen
                             |> updateModel NewTopBar.ShowSearchInput
                             |> queryView
-                            |> Query.findAll [ id "search-btn" ]
+                            |> Query.findAll [ id "search-button" ]
                             |> Query.count (Expect.equal 0)
                 , test "shows the search bar" <|
                     \_ ->
@@ -194,20 +248,10 @@ all =
                     \_ ->
                         init { highDensity = False, query = "" }
                             |> smallScreen
+                            |> loggedIn
                             |> updateModel NewTopBar.ShowSearchInput
-                            |> updateModel
-                                (NewTopBar.UserFetched
-                                    (RemoteData.Success
-                                        { id = "some-user"
-                                        , userName = "some-user"
-                                        , name = "some-user"
-                                        , email = "some-user"
-                                        , teams = Dict.empty
-                                        }
-                                    )
-                                )
                             |> queryView
-                            |> Query.findAll [ text "some-user" ]
+                            |> Query.findAll [ text userName ]
                             |> Query.count (Expect.equal 0)
                 , test "sends a BlurMsg message when the search input is blurred" <|
                     \_ ->
@@ -250,36 +294,23 @@ all =
                             |> updateModel NewTopBar.ShowSearchInput
                             |> updateModel NewTopBar.BlurMsg
                             |> queryView
-                            |> Query.findAll [ id "search-btn" ]
+                            |> Query.findAll [ id "search-button" ]
                             |> Query.count (Expect.equal 1)
                 , test "shows the user info/logout button" <|
                     \_ ->
                         init { highDensity = False, query = "" }
                             |> smallScreen
+                            |> loggedIn
                             |> updateModel NewTopBar.ShowSearchInput
                             |> updateModel NewTopBar.BlurMsg
-                            |> updateModel
-                                (NewTopBar.UserFetched
-                                    (RemoteData.Success
-                                        { id = "some-user"
-                                        , userName = "some-user"
-                                        , name = "some-user"
-                                        , email = "some-user"
-                                        , teams = Dict.empty
-                                        }
-                                    )
-                                )
                             |> queryView
-                            |> Query.has [ text "some-user" ]
+                            |> Query.has [ text userName ]
                 ]
             , describe "starting with a query"
                 [ test "shows the search input on small screens" <|
                     \_ ->
                         init { highDensity = False, query = "some-query" }
-                            |> updateModel
-                                (NewTopBar.ScreenResized
-                                    { width = 300, height = 800 }
-                                )
+                            |> smallScreen
                             |> queryView
                             |> Query.findAll [ tag "input" ]
                             |> Query.count (Expect.equal 1)
@@ -289,34 +320,23 @@ all =
             [ test "shows the entire search input on large screens" <|
                 \_ ->
                     init { highDensity = False, query = "" }
-                        |> updateModel
-                            (NewTopBar.ScreenResized
-                                { width = 1200, height = 900 }
-                            )
+                        |> bigScreen
                         |> queryView
                         |> Query.find [ tag "input" ]
-                        |> Query.has [ attribute (Attributes.placeholder "search") ]
+                        |> Query.has
+                            [ attribute (Attributes.placeholder "search") ]
             , test "hides the search input on changing to a small screen" <|
                 \_ ->
                     init { highDensity = False, query = "" }
-                        |> updateModel
-                            (NewTopBar.ScreenResized
-                                { width = 1200, height = 900 }
-                            )
-                        |> updateModel
-                            (NewTopBar.ScreenResized
-                                { width = 300, height = 800 }
-                            )
+                        |> bigScreen
+                        |> smallScreen
                         |> queryView
                         |> Query.findAll [ tag "input" ]
                         |> Query.count (Expect.equal 0)
             , test "shows no search bar on high density" <|
                 \_ ->
                     init { highDensity = True, query = "" }
-                        |> updateModel
-                            (NewTopBar.ScreenResized
-                                { width = 1200, height = 900 }
-                            )
+                        |> bigScreen
                         |> queryView
                         |> Query.findAll [ tag "input" ]
                         |> Query.count (Expect.equal 0)

@@ -5,10 +5,12 @@ module NewTopBar exposing
         , FilterMsg
         , FocusMsg
         , KeyDown
+        , LogOut
         , LoggedOut
         , Noop
         , ScreenResized
         , ShowSearchInput
+        , TeamsFetched
         , ToggleUserMenu
         , UserFetched
         )
@@ -26,7 +28,16 @@ import Concourse.Team
 import Concourse.User
 import Dom
 import Html.Styled as Html exposing (Html)
-import Html.Styled.Attributes as HA exposing (css, href, id, placeholder, src, type_, value)
+import Html.Styled.Attributes as HA
+    exposing
+        ( css
+        , href
+        , id
+        , placeholder
+        , src
+        , type_
+        , value
+        )
 import Html.Styled.Events exposing (..)
 import Http
 import Keyboard
@@ -35,6 +46,7 @@ import Navigation
 import NewTopBar.Styles as Styles
 import QueryString
 import RemoteData exposing (RemoteData)
+import Routes
 import ScreenSize exposing (ScreenSize(..))
 import SearchBar exposing (SearchBar(..))
 import Task
@@ -173,10 +185,10 @@ update msg model =
                 redirectUrl =
                     case model.searchBar of
                         Invisible ->
-                            "/dashboard/hd"
+                            Routes.dashboardHdRoute
 
                         _ ->
-                            "/dashboard"
+                            Routes.dashboardRoute
             in
             ( { model
                 | userState = UserStateLoggedOut
@@ -385,6 +397,7 @@ viewUserState { userState, userMenuVisible } =
                             [ HA.attribute "aria-label" "Log Out"
                             , onClick LogOut
                             , css Styles.logoutButton
+                            , id "logout-button"
                             ]
                             [ Html.div [] [ Html.text "logout" ] ]
                         ]
@@ -443,7 +456,7 @@ viewMiddleSection model =
         Collapsed ->
             [ Html.div [ css <| Styles.middleSection model.searchBar ]
                 [ Html.a
-                    [ id "search-btn"
+                    [ id "search-button"
                     , onClick ShowSearchInput
                     , css Styles.searchButton
                     ]
