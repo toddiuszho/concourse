@@ -1,13 +1,24 @@
-module NewTopBar
-    exposing
-        ( Model
-        , Msg(FilterMsg, KeyDown, LoggedOut, UserFetched, ShowSearchInput, BlurMsg, Noop, ScreenResized, ToggleUserMenu)
-        , fetchUser
-        , init
-        , update
-        , view
-        , query
+module NewTopBar exposing
+    ( Model
+    ,  Msg
+        ( BlurMsg
+        , FilterMsg
+        , FocusMsg
+        , KeyDown
+        , LoggedOut
+        , Noop
+        , ScreenResized
+        , ShowSearchInput
+        , ToggleUserMenu
+        , UserFetched
         )
+
+    , fetchUser
+    , init
+    , query
+    , update
+    , view
+    )
 
 import Array
 import Concourse
@@ -24,11 +35,11 @@ import Navigation
 import NewTopBar.Styles as Styles
 import QueryString
 import RemoteData exposing (RemoteData)
+import ScreenSize exposing (ScreenSize(..))
+import SearchBar exposing (SearchBar(..))
 import Task
 import TopBar exposing (userDisplayName)
 import UserState exposing (UserState(..))
-import ScreenSize exposing (ScreenSize(..))
-import SearchBar exposing (SearchBar(..))
 import Window
 
 
@@ -79,26 +90,28 @@ init showSearch query =
                     , selection = 0
                     , screenSize = Desktop
                     }
+
             else
                 Invisible
     in
-        ( { userState = UserStateUnknown
-          , userMenuVisible = False
-          , searchBar = searchBar
-          , teams = RemoteData.Loading
-          }
-        , Cmd.batch
-            [ fetchUser
-            , fetchTeams
-            , Task.perform ScreenResized Window.size
-            ]
-        )
+    ( { userState = UserStateUnknown
+      , userMenuVisible = False
+      , searchBar = searchBar
+      , teams = RemoteData.Loading
+      }
+    , Cmd.batch
+        [ fetchUser
+        , fetchTeams
+        , Task.perform ScreenResized Window.size
+        ]
+    )
 
 
 getScreenSize : Window.Size -> ScreenSize
 getScreenSize size =
     if size.width < 812 then
         Mobile
+
     else
         Desktop
 
@@ -130,12 +143,12 @@ update msg model =
                         _ ->
                             model
             in
-                ( newModel
-                , Cmd.batch
-                    [ Task.attempt (always Noop) (Dom.focus "search-input-field")
-                    , Navigation.modifyUrl (queryStringFromSearch query)
-                    ]
-                )
+            ( newModel
+            , Cmd.batch
+                [ Task.attempt (always Noop) (Dom.focus "search-input-field")
+                , Navigation.modifyUrl (queryStringFromSearch query)
+                ]
+            )
 
         UserFetched user ->
             case user of
@@ -165,13 +178,13 @@ update msg model =
                         _ ->
                             "/dashboard"
             in
-                ( { model
-                    | userState = UserStateLoggedOut
-                    , userMenuVisible = False
-                    , teams = RemoteData.Loading
-                  }
-                , Navigation.newUrl redirectUrl
-                )
+            ( { model
+                | userState = UserStateLoggedOut
+                , userMenuVisible = False
+                , teams = RemoteData.Loading
+              }
+            , Navigation.newUrl redirectUrl
+            )
 
         LoggedOut (Err err) ->
             flip always (Debug.log "failed to log out" err) <|
@@ -193,7 +206,7 @@ update msg model =
                         _ ->
                             model
             in
-                ( newModel, Cmd.none )
+            ( newModel, Cmd.none )
 
         BlurMsg ->
             let
@@ -204,6 +217,7 @@ update msg model =
                                 Mobile ->
                                     if String.isEmpty r.query then
                                         { model | searchBar = Collapsed }
+
                                     else
                                         { model | searchBar = Expanded { r | showAutocomplete = False, selectionMade = False, selection = 0 } }
 
@@ -213,7 +227,7 @@ update msg model =
                         _ ->
                             model
             in
-                ( newModel, Cmd.none )
+            ( newModel, Cmd.none )
 
         SelectMsg index ->
             let
@@ -225,19 +239,21 @@ update msg model =
                         _ ->
                             model
             in
-                ( newModel, Cmd.none )
+            ( newModel, Cmd.none )
 
         KeyDown keycode ->
             case model.searchBar of
                 Expanded r ->
                     if not r.showAutocomplete then
                         ( { model | searchBar = Expanded { r | selectionMade = False, selection = 0 } }, Cmd.none )
+
                     else
                         case keycode of
                             -- enter key
                             13 ->
                                 if not r.selectionMade then
                                     ( model, Cmd.none )
+
                                 else
                                     let
                                         options =
@@ -254,9 +270,9 @@ update msg model =
                                                 Just item ->
                                                     item
                                     in
-                                        ( { model | searchBar = Expanded { r | selectionMade = False, selection = 0, query = selectedItem } }
-                                        , Cmd.none
-                                        )
+                                    ( { model | searchBar = Expanded { r | selectionMade = False, selection = 0, query = selectedItem } }
+                                    , Cmd.none
+                                    )
 
                             -- up arrow
                             38 ->
@@ -291,6 +307,7 @@ update msg model =
                                 ( Desktop, Mobile ) ->
                                     if String.isEmpty r.query then
                                         { model | searchBar = Collapsed }
+
                                     else
                                         { model | searchBar = Expanded { r | screenSize = newSize } }
 
@@ -312,7 +329,7 @@ update msg model =
                         _ ->
                             model
             in
-                ( newModel, Cmd.none )
+            ( newModel, Cmd.none )
 
 
 showSearchInput : Model -> ( Model, Cmd Msg )
@@ -330,12 +347,12 @@ showSearchInput model =
                         }
             }
     in
-        case model.searchBar of
-            Collapsed ->
-                ( newModel, Task.attempt (always Noop) (Dom.focus "search-input-field") )
+    case model.searchBar of
+        Collapsed ->
+            ( newModel, Task.attempt (always Noop) (Dom.focus "search-input-field") )
 
-            _ ->
-                ( model, Cmd.none )
+        _ ->
+            ( model, Cmd.none )
 
 
 viewUserState : { a | userState : UserState, userMenuVisible : Bool } -> List (Html Msg)
@@ -371,6 +388,7 @@ viewUserState { userState, userMenuVisible } =
                             ]
                             [ Html.div [] [ Html.text "logout" ] ]
                         ]
+
                     else
                         []
                    )
@@ -448,6 +466,7 @@ viewMiddleSection model =
                                     }
                                 )
                             ]
+
                         else
                             []
                        )
@@ -469,20 +488,20 @@ viewAutocomplete r =
         options =
             autocompleteOptions r
     in
-        options
-            |> List.indexedMap
-                (\index option ->
-                    let
-                        active =
-                            r.selectionMade && index == (r.selection - 1) % List.length options
-                    in
-                        Html.li
-                            [ onMouseDown (FilterMsg option)
-                            , onMouseOver (SelectMsg index)
-                            , css <| Styles.searchOption { screenSize = r.screenSize, active = active }
-                            ]
-                            [ Html.text option ]
-                )
+    options
+        |> List.indexedMap
+            (\index option ->
+                let
+                    active =
+                        r.selectionMade && index == (r.selection - 1) % List.length options
+                in
+                Html.li
+                    [ onMouseDown (FilterMsg option)
+                    , onMouseOver (SelectMsg index)
+                    , css <| Styles.searchOption { screenSize = r.screenSize, active = active }
+                    ]
+                    [ Html.text option ]
+            )
 
 
 viewUserInfo : Model -> List (Html Msg)
