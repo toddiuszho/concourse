@@ -4,6 +4,8 @@ import Dict
 import Expect
 import Html.Attributes as Attributes
 import Html.Styled as HS
+import Http
+import Navigation
 import NewTopBar
 import RemoteData
 import Test exposing (..)
@@ -27,14 +29,18 @@ init { highDensity, query } =
 
 smallScreen : NewTopBar.Model -> NewTopBar.Model
 smallScreen =
-    updateModel <|
-        NewTopBar.ScreenResized { width = 300, height = 800 }
+    updateModel
+        << NewTopBar.ScreenResized
+    <|
+        { width = 300, height = 800 }
 
 
 bigScreen : NewTopBar.Model -> NewTopBar.Model
 bigScreen =
-    updateModel <|
-        NewTopBar.ScreenResized { width = 1200, height = 900 }
+    updateModel
+        << NewTopBar.ScreenResized
+    <|
+        { width = 1200, height = 900 }
 
 
 userName : String
@@ -44,15 +50,33 @@ userName =
 
 loggedIn : NewTopBar.Model -> NewTopBar.Model
 loggedIn =
-    updateModel <|
-        NewTopBar.UserFetched <|
-            RemoteData.Success
-                { id = userName
-                , userName = userName
-                , name = userName
-                , email = userName
-                , teams = Dict.empty
-                }
+    updateModel
+        << NewTopBar.UserFetched
+        << RemoteData.Success
+    <|
+        { id = userName
+        , userName = userName
+        , name = userName
+        , email = userName
+        , teams = Dict.empty
+        }
+
+
+loggedOut : NewTopBar.Model -> NewTopBar.Model
+loggedOut =
+    updateModel
+        << NewTopBar.UserFetched
+        << RemoteData.Failure
+        << Http.BadStatus
+    <|
+        { url = ""
+        , status =
+            { code = 401
+            , message = "Unauthorized"
+            }
+        , headers = Dict.empty
+        , body = ""
+        }
 
 
 queryView : NewTopBar.Model -> Query.Single NewTopBar.Msg
@@ -108,6 +132,26 @@ all =
                             , Query.index 6
                                 >> Query.has [ text "status: succeeded" ]
                             ]
+            , test "mousing over an option sends SelectMsg" <|
+                \_ ->
+                    init { highDensity = False, query = "" }
+                        |> updateModel NewTopBar.FocusMsg
+                        |> updateModel (NewTopBar.FilterMsg "status:")
+                        |> queryView
+                        |> Query.find
+                            [ tag "li", containing [ text "status: pending" ] ]
+                        |> Event.simulate Event.mouseOver
+                        |> Event.expect (NewTopBar.SelectMsg 1)
+            , test "SelectMsg changes selection" <|
+                \_ ->
+                    init { highDensity = False, query = "" }
+                        |> updateModel NewTopBar.FocusMsg
+                        |> updateModel (NewTopBar.FilterMsg "status:")
+                        |> updateModel (NewTopBar.SelectMsg 1)
+                        |> updateModel (NewTopBar.KeyDown 13)
+                        |> queryView
+                        |> Query.find [ tag "input" ]
+                        |> Query.has [ attribute (Attributes.value "status: pending") ]
             , test "typing team: shows all teams" <|
                 \_ ->
                     init { highDensity = False, query = "" }
@@ -153,6 +197,25 @@ all =
                         |> queryView
                         |> Query.findAll [ tag "input" ]
                         |> Query.count (Expect.equal 0)
+            , describe "logging in"
+                [ test "shows login button" <|
+                    \_ ->
+                        init { highDensity = True, query = "" }
+                            |> smallScreen
+                            |> loggedOut
+                            |> queryView
+                            |> Query.findAll [ id "login-button" ]
+                            |> Query.count (Expect.equal 1)
+                , test "clicking login sends LogIn message" <|
+                    \_ ->
+                        init { highDensity = True, query = "" }
+                            |> smallScreen
+                            |> loggedOut
+                            |> queryView
+                            |> Query.find [ id "login-button" ]
+                            |> Event.simulate Event.click
+                            |> Event.expect NewTopBar.LogIn
+                ]
             , describe "when logged in"
                 [ test "shows the user's name" <|
                     \_ ->
@@ -200,6 +263,22 @@ all =
                             |> Query.find [ id "logout-button" ]
                             |> Event.simulate Event.click
                             |> Event.expect NewTopBar.LogOut
+                , describe "logging out"
+                    [ test "redirects to dashboard on normal dashboard" <|
+                        \_ ->
+                            init { highDensity = False, query = "" }
+                                |> NewTopBar.update
+                                    (NewTopBar.LoggedOut (Ok ()))
+                                |> Tuple.second
+                                |> Expect.equal (Navigation.newUrl "/")
+                    , test "redirects to high-density view on high-density view" <|
+                        \_ ->
+                            init { highDensity = True, query = "" }
+                                |> NewTopBar.update
+                                    (NewTopBar.LoggedOut (Ok ()))
+                                |> Tuple.second
+                                |> Expect.equal (Navigation.newUrl "/hd")
+                    ]
                 ]
             , test "shows no search input" <|
                 \_ ->
