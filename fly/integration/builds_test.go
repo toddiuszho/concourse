@@ -61,11 +61,13 @@ var _ = Describe("Fly CLI", func() {
 				{Contents: "start", Color: color.New(color.Bold)},
 				{Contents: "end", Color: color.New(color.Bold)},
 				{Contents: "duration", Color: color.New(color.Bold)},
+				{Contents: "team", Color: color.New(color.Bold)},
 			}
 		})
 
 		JustBeforeEach(func() {
 			var err error
+
 			atcServer.AppendHandlers(
 				ghttp.CombineHandlers(
 					ghttp.VerifyRequest("GET", expectedURL, queryParams),
@@ -92,6 +94,7 @@ var _ = Describe("Fly CLI", func() {
 						Status:       "started",
 						StartTime:    runningBuildStartTime.Unix(),
 						EndTime:      0,
+						TeamName:     "team1",
 					},
 					{
 						ID:           3,
@@ -101,6 +104,7 @@ var _ = Describe("Fly CLI", func() {
 						Status:       "pending",
 						StartTime:    pendingBuildStartTime.Unix(),
 						EndTime:      pendingBuildEndTime.Unix(),
+						TeamName:     "team1",
 					},
 					{
 						ID:           1000001,
@@ -110,6 +114,7 @@ var _ = Describe("Fly CLI", func() {
 						Status:       "errored",
 						StartTime:    erroredBuildStartTime.Unix(),
 						EndTime:      erroredBuildEndTime.Unix(),
+						TeamName:     "team1",
 					},
 					{
 						ID:           39,
@@ -119,6 +124,7 @@ var _ = Describe("Fly CLI", func() {
 						Status:       "pending",
 						StartTime:    0,
 						EndTime:      0,
+						TeamName:     "team1",
 					},
 				}
 			})
@@ -133,7 +139,7 @@ var _ = Describe("Fly CLI", func() {
 					Expect(session.Out.Contents()).To(MatchJSON(`[
               {
                 "id": 2,
-                "team_name": "",
+                "team_name": "team1",
                 "name": "62",
                 "status": "started",
                 "job_name": "some-job",
@@ -143,7 +149,7 @@ var _ = Describe("Fly CLI", func() {
               },
               {
                 "id": 3,
-                "team_name": "",
+                "team_name": "team1",
                 "name": "63",
                 "status": "pending",
                 "job_name": "some-other-job",
@@ -154,7 +160,7 @@ var _ = Describe("Fly CLI", func() {
               },
               {
                 "id": 1000001,
-                "team_name": "",
+                "team_name": "team1",
                 "name": "",
                 "status": "errored",
                 "api_url": "",
@@ -163,7 +169,7 @@ var _ = Describe("Fly CLI", func() {
               },
               {
                 "id": 39,
-                "team_name": "",
+                "team_name": "team1",
                 "name": "",
                 "status": "pending",
                 "api_url": ""
@@ -192,6 +198,7 @@ var _ = Describe("Fly CLI", func() {
 									Suffix:   "+",
 								}.String(),
 							},
+							{Contents: "team1"},
 						},
 						{
 							{Contents: "3"},
@@ -201,6 +208,7 @@ var _ = Describe("Fly CLI", func() {
 							{Contents: pendingBuildStartTime.Local().Format(timeDateLayout)},
 							{Contents: pendingBuildEndTime.Local().Format(timeDateLayout)},
 							{Contents: "1h15m0s"},
+							{Contents: "team1"},
 						},
 						{
 							{Contents: "1000001"},
@@ -210,6 +218,7 @@ var _ = Describe("Fly CLI", func() {
 							{Contents: erroredBuildStartTime.Local().Format(timeDateLayout)},
 							{Contents: erroredBuildEndTime.Local().Format(timeDateLayout)},
 							{Contents: "2h45m0s"},
+							{Contents: "team1"},
 						},
 						{
 							{Contents: "39"},
@@ -219,6 +228,7 @@ var _ = Describe("Fly CLI", func() {
 							{Contents: "n/a"},
 							{Contents: "n/a"},
 							{Contents: "n/a"},
+							{Contents: "team1"},
 						},
 					},
 				}))
@@ -239,16 +249,42 @@ var _ = Describe("Fly CLI", func() {
 		})
 
 		Context("when validating parameters", func() {
-			BeforeEach(func() {
-				cmdArgs = append(cmdArgs, "-j")
-				cmdArgs = append(cmdArgs, "some-pipeline/some-job")
-				cmdArgs = append(cmdArgs, "-p")
-				cmdArgs = append(cmdArgs, "some-other-pipeline")
+			Context("when specifying --all-teams and --team", func() {
+				BeforeEach(func() {
+					cmdArgs = append(cmdArgs, "--all-teams",
+						"--team", "blah")
+				})
+
+				It("instructs the user to use either --all-teams or --team", func() {
+					Eventually(session.Err).Should(gbytes.Say("Cannot specify both --all-teams and --team"))
+					Eventually(session).Should(gexec.Exit(1))
+
+				})
 			})
 
-			It("instructs the user to specify --job or --pipeline if both are present", func() {
-				Eventually(session.Err).Should(gbytes.Say("Cannot specify both --pipeline and --job"))
-				Eventually(session).Should(gexec.Exit(1))
+			Context("when specifying --all-teams and --current-team", func() {
+				BeforeEach(func() {
+					cmdArgs = append(cmdArgs, "--all-teams",
+						"--current-team")
+				})
+
+				It("instructs the user to not mix them together", func() {
+					Eventually(session.Err).Should(gbytes.Say("Cannot specify both --all-teams and --current-team"))
+					Eventually(session).Should(gexec.Exit(1))
+
+				})
+			})
+
+			Context("when specifying --pipeline and --job", func() {
+				BeforeEach(func() {
+					cmdArgs = append(cmdArgs, "-j", "some-pipeline/some-job",
+						"-p", "some-other-pipeline")
+				})
+
+				It("instructs the user to not mix them together", func() {
+					Eventually(session.Err).Should(gbytes.Say("Cannot specify both --pipeline and --job"))
+					Eventually(session).Should(gexec.Exit(1))
+				})
 			})
 		})
 
@@ -411,9 +447,9 @@ var _ = Describe("Fly CLI", func() {
 			})
 		})
 
-		Context("when passing the team argument", func() {
+		Context("when passing the current-team argument", func() {
 			BeforeEach(func() {
-				cmdArgs = append(cmdArgs, "-t")
+				cmdArgs = append(cmdArgs, "--current-team")
 
 				expectedURL = "/api/v1/teams/main/builds"
 				queryParams = "limit=50"
@@ -498,6 +534,227 @@ var _ = Describe("Fly CLI", func() {
 					Eventually(session).Should(gexec.Exit(0))
 				})
 			})
+		})
+
+		Context("when passing teams argument", func() {
+
+			Context("when passing one team filter", func() {
+				BeforeEach(func() {
+					cmdArgs = append(cmdArgs, "--team", "team1")
+
+					expectedURL = "/api/v1/teams/team1/builds"
+					queryParams = "limit=50"
+					returnedStatusCode = http.StatusOK
+					returnedBuilds = []atc.Build{
+						{
+							ID:           3,
+							PipelineName: "some-pipeline",
+							JobName:      "some-job",
+							Name:         "63",
+							Status:       "succeeded",
+							StartTime:    succeededBuildStartTime.Unix(),
+							EndTime:      succeededBuildEndTime.Unix(),
+							TeamName:     "team1",
+						},
+					}
+				})
+
+				It("returns the builds correctly", func() {
+					Eventually(session.Out).Should(PrintTable(ui.Table{
+						Headers: expectedHeaders,
+						Data: []ui.TableRow{
+							{
+								{Contents: "3"},
+								{Contents: "some-pipeline/some-job"},
+								{Contents: "63"},
+								{Contents: "succeeded"},
+								{Contents: succeededBuildStartTime.Local().Format(timeDateLayout)},
+								{Contents: succeededBuildEndTime.Local().Format(timeDateLayout)},
+								{Contents: "1h15m0s"},
+								{Contents: "team1"},
+							},
+						},
+					}))
+					Eventually(session).Should(gexec.Exit(0))
+				})
+
+			})
+
+			Context("when passing multiple team filters", func() {
+				BeforeEach(func() {
+					cmdArgs = append(cmdArgs, "--team", "team1",
+						"--team", "team2")
+
+					expectedURL = "/api/v1/teams/team1/builds"
+					queryParams = "limit=50"
+					returnedStatusCode = http.StatusOK
+					returnedBuilds = []atc.Build{
+						{
+							ID:           3,
+							PipelineName: "some-pipeline",
+							JobName:      "some-job",
+							Name:         "63",
+							Status:       "succeeded",
+							StartTime:    succeededBuildStartTime.Unix(),
+							EndTime:      succeededBuildEndTime.Unix(),
+							TeamName:     "team1",
+						},
+					}
+				})
+
+				JustBeforeEach(func() {
+					expectedURL = "/api/v1/teams/team2/builds"
+					queryParams = "limit=50"
+					returnedStatusCode = http.StatusOK
+					returnedBuilds = []atc.Build{
+						{
+							ID:           4,
+							PipelineName: "some-pipeline",
+							JobName:      "some-job",
+							Name:         "63",
+							Status:       "succeeded",
+							StartTime:    succeededBuildStartTime.Unix(),
+							EndTime:      succeededBuildEndTime.Unix(),
+							TeamName:     "team2",
+						},
+					}
+
+					atcServer.AppendHandlers(
+						ghttp.CombineHandlers(
+							ghttp.VerifyRequest("GET", expectedURL, queryParams),
+							ghttp.RespondWithJSONEncoded(returnedStatusCode, returnedBuilds),
+						),
+					)
+				})
+
+				It("returns the builds correctly", func() {
+					Eventually(session.Out).Should(PrintTable(ui.Table{
+						Headers: expectedHeaders,
+						Data: []ui.TableRow{
+							{
+								{Contents: "3"},
+								{Contents: "some-pipeline/some-job"},
+								{Contents: "63"},
+								{Contents: "succeeded"},
+								{Contents: succeededBuildStartTime.Local().Format(timeDateLayout)},
+								{Contents: succeededBuildEndTime.Local().Format(timeDateLayout)},
+								{Contents: "1h15m0s"},
+								{Contents: "team1"},
+							},
+
+							{
+								{Contents: "4"},
+								{Contents: "some-pipeline/some-job"},
+								{Contents: "63"},
+								{Contents: "succeeded"},
+								{Contents: succeededBuildStartTime.Local().Format(timeDateLayout)},
+								{Contents: succeededBuildEndTime.Local().Format(timeDateLayout)},
+								{Contents: "1h15m0s"},
+								{Contents: "team2"},
+							},
+						},
+					}))
+					Eventually(session).Should(gexec.Exit(0))
+				})
+
+			})
+		})
+
+		Context("when passing all-teams argument", func() {
+
+			BeforeEach(func() {
+				expectedURL = "/api/v1/teams"
+				returnedStatusCode = http.StatusOK
+				returnedTeams := []atc.Team{
+					{
+						ID:   1,
+						Name: "team1",
+					},
+					{
+						ID:   1,
+						Name: "team2",
+					},
+				}
+
+				atcServer.AppendHandlers(
+					ghttp.CombineHandlers(
+						ghttp.VerifyRequest("GET", expectedURL),
+						ghttp.RespondWithJSONEncoded(returnedStatusCode, returnedTeams),
+					),
+				)
+				cmdArgs = append(cmdArgs, "--all-teams")
+
+				expectedURL = "/api/v1/teams/team1/builds"
+				queryParams = "limit=50"
+				returnedStatusCode = http.StatusOK
+				returnedBuilds = []atc.Build{
+					{
+						ID:           3,
+						PipelineName: "some-pipeline",
+						JobName:      "some-job",
+						Name:         "63",
+						Status:       "succeeded",
+						StartTime:    succeededBuildStartTime.Unix(),
+						EndTime:      succeededBuildEndTime.Unix(),
+						TeamName:     "team1",
+					},
+				}
+			})
+
+			JustBeforeEach(func() {
+				expectedURL = "/api/v1/teams/team2/builds"
+				queryParams = "limit=50"
+				returnedStatusCode = http.StatusOK
+				returnedBuilds = []atc.Build{
+					{
+						ID:           4,
+						PipelineName: "some-pipeline",
+						JobName:      "some-job",
+						Name:         "63",
+						Status:       "succeeded",
+						StartTime:    succeededBuildStartTime.Unix(),
+						EndTime:      succeededBuildEndTime.Unix(),
+						TeamName:     "team2",
+					},
+				}
+
+				atcServer.AppendHandlers(
+					ghttp.CombineHandlers(
+						ghttp.VerifyRequest("GET", expectedURL, queryParams),
+						ghttp.RespondWithJSONEncoded(returnedStatusCode, returnedBuilds),
+					),
+				)
+			})
+
+			It("returns the builds correctly", func() {
+				Eventually(session.Out).Should(PrintTable(ui.Table{
+					Headers: expectedHeaders,
+					Data: []ui.TableRow{
+						{
+							{Contents: "3"},
+							{Contents: "some-pipeline/some-job"},
+							{Contents: "63"},
+							{Contents: "succeeded"},
+							{Contents: succeededBuildStartTime.Local().Format(timeDateLayout)},
+							{Contents: succeededBuildEndTime.Local().Format(timeDateLayout)},
+							{Contents: "1h15m0s"},
+							{Contents: "team1"},
+						},
+						{
+							{Contents: "4"},
+							{Contents: "some-pipeline/some-job"},
+							{Contents: "63"},
+							{Contents: "succeeded"},
+							{Contents: succeededBuildStartTime.Local().Format(timeDateLayout)},
+							{Contents: succeededBuildEndTime.Local().Format(timeDateLayout)},
+							{Contents: "1h15m0s"},
+							{Contents: "team2"},
+						},
+					},
+				}))
+				Eventually(session).Should(gexec.Exit(0))
+			})
+
 		})
 
 		Context("when passing the pipeline argument", func() {
@@ -602,3 +859,4 @@ var _ = Describe("Fly CLI", func() {
 		})
 	})
 })
+
