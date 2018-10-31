@@ -1075,7 +1075,6 @@ var _ = Describe("Team", func() {
 				Expect(len(builds)).To(Equal(2))
 				Expect(builds[0]).To(Equal(allBuilds[2]))
 				Expect(builds[1]).To(Equal(allBuilds[1]))
-
 				Expect(pagination.Previous).To(Equal(&db.Page{Until: allBuilds[2].ID(), Limit: 2}))
 				Expect(pagination.Next).To(Equal(&db.Page{Since: allBuilds[1].ID(), Limit: 2}))
 			})
@@ -1155,14 +1154,17 @@ var _ = Describe("Team", func() {
 
 	Describe("Builds", func() {
 		var (
-			expectedBuilds []db.Build
-			pipeline       db.Pipeline
+			expectedBuilds                              []db.Build
+			pipeline                                    db.Pipeline
+			oneOffBuild, build, secondBuild, thirdBuild db.Build
 		)
 
 		BeforeEach(func() {
-			oneOfAKind, err := team.CreateOneOffBuild()
+			var err error
+
+			oneOffBuild, err = team.CreateOneOffBuild()
 			Expect(err).NotTo(HaveOccurred())
-			expectedBuilds = append(expectedBuilds, oneOfAKind)
+			expectedBuilds = append(expectedBuilds, oneOffBuild)
 
 			config := atc.Config{
 				Jobs: atc.JobConfigs{
@@ -1181,11 +1183,11 @@ var _ = Describe("Team", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(found).To(BeTrue())
 
-			build, err := job.CreateBuild()
+			build, err = job.CreateBuild()
 			Expect(err).ToNot(HaveOccurred())
 			expectedBuilds = append(expectedBuilds, build)
 
-			secondBuild, err := job.CreateBuild()
+			secondBuild, err = job.CreateBuild()
 			Expect(err).ToNot(HaveOccurred())
 			expectedBuilds = append(expectedBuilds, secondBuild)
 
@@ -1193,7 +1195,7 @@ var _ = Describe("Team", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(found).To(BeTrue())
 
-			thirdBuild, err := someOtherJob.CreateBuild()
+			thirdBuild, err = someOtherJob.CreateBuild()
 			Expect(err).ToNot(HaveOccurred())
 			expectedBuilds = append(expectedBuilds, thirdBuild)
 		})
@@ -1202,6 +1204,47 @@ var _ = Describe("Team", func() {
 			builds, _, err := team.Builds(db.Page{Limit: 10})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(builds).To(ConsistOf(expectedBuilds))
+		})
+
+		Context("when limiting the range of build ids", func() {
+			Context("specifying only until", func() {
+				It("returns all builds after the specified id", func() {
+					builds, _, err := team.Builds(db.Page{Limit: 50, Until: secondBuild.ID()})
+					Expect(err).NotTo(HaveOccurred())
+					Expect(builds).To(ConsistOf(thirdBuild))
+				})
+			})
+
+			Context("specifying only since", func() {
+				It("returns all builds before the specified id", func() {
+					builds, _, err := team.Builds(db.Page{Limit: 50, Since: secondBuild.ID()})
+					Expect(err).NotTo(HaveOccurred())
+					Expect(builds).To(ConsistOf(oneOffBuild, build))
+				})
+			})
+
+			Context("specifying both since and until", func() {
+				It("returns all builds within range of ids", func() {
+					builds, _, err := team.Builds(db.Page{Limit: 50, Since: thirdBuild.ID(), Until: build.ID()})
+					Expect(err).NotTo(HaveOccurred())
+					Expect(builds).To(ConsistOf(secondBuild))
+				})
+			})
+
+			Context("specifying since greater than the biggest ID in the database", func() {
+				It("returns no rows error", func() {
+					builds, _, err := team.Builds(db.Page{Limit: 50, Until: thirdBuild.ID() + 1})
+					Expect(err).ToNot(HaveOccurred())
+					Expect(builds).To(BeEmpty())
+				})
+			})
+
+			Context("specifying invalid boundaries", func() {
+				It("should fail", func() {
+					_, _, err := team.Builds(db.Page{Limit: 50, Since: secondBuild.ID(), Until: thirdBuild.ID()})
+					Expect(err).To(HaveOccurred())
+				})
+			})
 		})
 
 		Context("when there are builds that belong to different teams", func() {

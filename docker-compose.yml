@@ -27,6 +27,7 @@ services:
     - CONCOURSE_ADD_LOCAL_USER=test:test,guest:guest
     - CONCOURSE_MAIN_TEAM_LOCAL_USER=test
     - CONCOURSE_LOG_LEVEL=debug
+    - CONCOURSE_LOG_DB_QUERIES=true
 
   worker:
     build:

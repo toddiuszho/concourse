@@ -82,7 +82,15 @@ func (fake *FakeResourceConfigFactory) CleanUnreferencedConfigsCallCount() int {
 	return len(fake.cleanUnreferencedConfigsArgsForCall)
 }
 
+func (fake *FakeResourceConfigFactory) CleanUnreferencedConfigsCalls(stub func() error) {
+	fake.cleanUnreferencedConfigsMutex.Lock()
+	defer fake.cleanUnreferencedConfigsMutex.Unlock()
+	fake.CleanUnreferencedConfigsStub = stub
+}
+
 func (fake *FakeResourceConfigFactory) CleanUnreferencedConfigsReturns(result1 error) {
+	fake.cleanUnreferencedConfigsMutex.Lock()
+	defer fake.cleanUnreferencedConfigsMutex.Unlock()
 	fake.CleanUnreferencedConfigsStub = nil
 	fake.cleanUnreferencedConfigsReturns = struct {
 		result1 error
@@ -90,6 +98,8 @@ func (fake *FakeResourceConfigFactory) CleanUnreferencedConfigsReturns(result1 e
 }
 
 func (fake *FakeResourceConfigFactory) CleanUnreferencedConfigsReturnsOnCall(i int, result1 error) {
+	fake.cleanUnreferencedConfigsMutex.Lock()
+	defer fake.cleanUnreferencedConfigsMutex.Unlock()
 	fake.CleanUnreferencedConfigsStub = nil
 	if fake.cleanUnreferencedConfigsReturnsOnCall == nil {
 		fake.cleanUnreferencedConfigsReturnsOnCall = make(map[int]struct {
@@ -128,6 +138,12 @@ func (fake *FakeResourceConfigFactory) FindOrCreateResourceConfigCallCount() int
 	return len(fake.findOrCreateResourceConfigArgsForCall)
 }
 
+func (fake *FakeResourceConfigFactory) FindOrCreateResourceConfigCalls(stub func(lager.Logger, string, atc.Source, creds.VersionedResourceTypes) (db.ResourceConfig, error)) {
+	fake.findOrCreateResourceConfigMutex.Lock()
+	defer fake.findOrCreateResourceConfigMutex.Unlock()
+	fake.FindOrCreateResourceConfigStub = stub
+}
+
 func (fake *FakeResourceConfigFactory) FindOrCreateResourceConfigArgsForCall(i int) (lager.Logger, string, atc.Source, creds.VersionedResourceTypes) {
 	fake.findOrCreateResourceConfigMutex.RLock()
 	defer fake.findOrCreateResourceConfigMutex.RUnlock()
@@ -136,6 +152,8 @@ func (fake *FakeResourceConfigFactory) FindOrCreateResourceConfigArgsForCall(i i
 }
 
 func (fake *FakeResourceConfigFactory) FindOrCreateResourceConfigReturns(result1 db.ResourceConfig, result2 error) {
+	fake.findOrCreateResourceConfigMutex.Lock()
+	defer fake.findOrCreateResourceConfigMutex.Unlock()
 	fake.FindOrCreateResourceConfigStub = nil
 	fake.findOrCreateResourceConfigReturns = struct {
 		result1 db.ResourceConfig
@@ -144,6 +162,8 @@ func (fake *FakeResourceConfigFactory) FindOrCreateResourceConfigReturns(result1
 }
 
 func (fake *FakeResourceConfigFactory) FindOrCreateResourceConfigReturnsOnCall(i int, result1 db.ResourceConfig, result2 error) {
+	fake.findOrCreateResourceConfigMutex.Lock()
+	defer fake.findOrCreateResourceConfigMutex.Unlock()
 	fake.FindOrCreateResourceConfigStub = nil
 	if fake.findOrCreateResourceConfigReturnsOnCall == nil {
 		fake.findOrCreateResourceConfigReturnsOnCall = make(map[int]struct {
@@ -184,6 +204,12 @@ func (fake *FakeResourceConfigFactory) FindResourceConfigCallCount() int {
 	return len(fake.findResourceConfigArgsForCall)
 }
 
+func (fake *FakeResourceConfigFactory) FindResourceConfigCalls(stub func(lager.Logger, string, atc.Source, creds.VersionedResourceTypes) (db.ResourceConfig, bool, error)) {
+	fake.findResourceConfigMutex.Lock()
+	defer fake.findResourceConfigMutex.Unlock()
+	fake.FindResourceConfigStub = stub
+}
+
 func (fake *FakeResourceConfigFactory) FindResourceConfigArgsForCall(i int) (lager.Logger, string, atc.Source, creds.VersionedResourceTypes) {
 	fake.findResourceConfigMutex.RLock()
 	defer fake.findResourceConfigMutex.RUnlock()
@@ -192,6 +218,8 @@ func (fake *FakeResourceConfigFactory) FindResourceConfigArgsForCall(i int) (lag
 }
 
 func (fake *FakeResourceConfigFactory) FindResourceConfigReturns(result1 db.ResourceConfig, result2 bool, result3 error) {
+	fake.findResourceConfigMutex.Lock()
+	defer fake.findResourceConfigMutex.Unlock()
 	fake.FindResourceConfigStub = nil
 	fake.findResourceConfigReturns = struct {
 		result1 db.ResourceConfig
@@ -201,6 +229,8 @@ func (fake *FakeResourceConfigFactory) FindResourceConfigReturns(result1 db.Reso
 }
 
 func (fake *FakeResourceConfigFactory) FindResourceConfigReturnsOnCall(i int, result1 db.ResourceConfig, result2 bool, result3 error) {
+	fake.findResourceConfigMutex.Lock()
+	defer fake.findResourceConfigMutex.Unlock()
 	fake.FindResourceConfigStub = nil
 	if fake.findResourceConfigReturnsOnCall == nil {
 		fake.findResourceConfigReturnsOnCall = make(map[int]struct {

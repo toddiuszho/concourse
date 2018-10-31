@@ -17,6 +17,8 @@ import (
 )
 
 const timeDateLayout = "2006-01-02@15:04:05-0700"
+const inputTimeLayout = "2006-01-02 15:04:05"
+
 
 type BuildsCommand struct {
 	AllTeams    bool                     `short:"a" long:"all-teams" description:"Show builds for the all teams that user has access to"`
@@ -26,6 +28,8 @@ type BuildsCommand struct {
 	Json        bool                     `long:"json" description:"Print command result as JSON"`
 	Pipeline    flaghelpers.PipelineFlag `short:"p" long:"pipeline" description:"Name of a pipeline to get builds for"`
 	Teams       []string                 `short:"t"  long:"team" description:"Show builds for these teams"`
+	Since 		string 				      `long:"since" description:"Start of the range to filter builds"`
+	Until 		string                   `long:"until" description:"End of the range to filter builds"`
 }
 
 func (command *BuildsCommand) Execute([]string) error {
@@ -37,6 +41,29 @@ func (command *BuildsCommand) Execute([]string) error {
 	err = target.Validate()
 	if err != nil {
 		return err
+	}
+
+	var (
+		timeSince time.Time
+		timeUntil time.Time
+	)
+
+	if command.Since != "" {
+		timeSince, err = time.Parse(inputTimeLayout, command.Since)
+		if err != nil {
+			return errors.New("Since time should be in the format: " + inputTimeLayout)
+		}
+	}
+
+	if command.Until != "" {
+		timeUntil, err = time.Parse(inputTimeLayout, command.Until)
+		if err != nil {
+			return errors.New("Until time should be in the format: " + inputTimeLayout)
+		}
+	}
+
+	if timeSince.After(timeUntil) {
+		return errors.New("Cannot have --since after --until")
 	}
 
 	if command.pipelineFlag() && command.jobFlag() {
@@ -57,7 +84,13 @@ func (command *BuildsCommand) Execute([]string) error {
 		teams  = make([]concourse.Team, 0)
 	)
 
-	page := concourse.Page{Limit: command.Count}
+	page := concourse.Page{
+		Limit: command.Count,
+		Since: int(timeSince.Unix()),
+		Until: int(timeUntil.Unix()),
+		Timestamps: true,
+	}
+
 	currentTeam := target.Team()
 	client := target.Client()
 

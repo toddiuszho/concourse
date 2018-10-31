@@ -23,6 +23,7 @@ func (s *Server) ListTeamBuilds(w http.ResponseWriter, r *http.Request) {
 	logger := s.logger.Session("list-team-builds")
 
 	teamName := r.FormValue(":team_name")
+	timestamps := r.FormValue("timestamps")
 
 	urlUntil := r.FormValue(atc.PaginationQueryUntil)
 	until, _ = strconv.Atoi(urlUntil)
@@ -49,8 +50,12 @@ func (s *Server) ListTeamBuilds(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-
-	builds, pagination, err = team.Builds(page)
+	fmt.Printf("******************\n %+v", timestamps)
+	if timestamps == ""	 {
+		builds, pagination, err = team.Builds(page)
+	} else {
+		builds, pagination, err = team.BuildsInTimeRange(page)
+	}
 	if err != nil {
 		logger.Error("failed-to-get-team-builds", err)
 		w.WriteHeader(http.StatusNotFound)

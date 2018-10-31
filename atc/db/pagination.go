@@ -1,6 +1,7 @@
 package db
 
 type Page struct {
+	// TODO [cc,by]: convert to uint64
 	Since int // exclusive
 	Until int // exclusive
 

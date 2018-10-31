@@ -48,6 +48,8 @@ type Team interface {
 	CreateOneOffBuild() (Build, error)
 	PrivateAndPublicBuilds(Page) ([]Build, Pagination, error)
 	Builds(page Page) ([]Build, Pagination, error)
+	// CC: maybe a different name?
+	BuildsInTimeRange(page Page) ([]Build, Pagination, error)
 
 	SaveWorker(atcWorker atc.Worker, ttl time.Duration) (Worker, error)
 	Workers() ([]Worker, error)
@@ -712,6 +714,10 @@ func (t *team) PrivateAndPublicBuilds(page Page) ([]Build, Pagination, error) {
 		Where(sq.Or{sq.Eq{"p.public": true}, sq.Eq{"t.id": t.id}})
 
 	return getBuildsWithPagination(newBuildsQuery, page, t.conn, t.lockFactory)
+}
+
+func (t *team) BuildsInTimeRange(page Page) ([]Build, Pagination, error) {
+	return getBuildsWithDates(buildsQuery.Where(sq.Eq{"t.id": t.id}), page, t.conn, t.lockFactory)
 }
 
 func (t *team) Builds(page Page) ([]Build, Pagination, error) {

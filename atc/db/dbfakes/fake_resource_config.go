@@ -98,6 +98,12 @@ func (fake *FakeResourceConfig) AcquireResourceConfigCheckingLockWithIntervalChe
 	return len(fake.acquireResourceConfigCheckingLockWithIntervalCheckArgsForCall)
 }
 
+func (fake *FakeResourceConfig) AcquireResourceConfigCheckingLockWithIntervalCheckCalls(stub func(lager.Logger, time.Duration, bool) (lock.Lock, bool, error)) {
+	fake.acquireResourceConfigCheckingLockWithIntervalCheckMutex.Lock()
+	defer fake.acquireResourceConfigCheckingLockWithIntervalCheckMutex.Unlock()
+	fake.AcquireResourceConfigCheckingLockWithIntervalCheckStub = stub
+}
+
 func (fake *FakeResourceConfig) AcquireResourceConfigCheckingLockWithIntervalCheckArgsForCall(i int) (lager.Logger, time.Duration, bool) {
 	fake.acquireResourceConfigCheckingLockWithIntervalCheckMutex.RLock()
 	defer fake.acquireResourceConfigCheckingLockWithIntervalCheckMutex.RUnlock()
@@ -106,6 +112,8 @@ func (fake *FakeResourceConfig) AcquireResourceConfigCheckingLockWithIntervalChe
 }
 
 func (fake *FakeResourceConfig) AcquireResourceConfigCheckingLockWithIntervalCheckReturns(result1 lock.Lock, result2 bool, result3 error) {
+	fake.acquireResourceConfigCheckingLockWithIntervalCheckMutex.Lock()
+	defer fake.acquireResourceConfigCheckingLockWithIntervalCheckMutex.Unlock()
 	fake.AcquireResourceConfigCheckingLockWithIntervalCheckStub = nil
 	fake.acquireResourceConfigCheckingLockWithIntervalCheckReturns = struct {
 		result1 lock.Lock
@@ -115,6 +123,8 @@ func (fake *FakeResourceConfig) AcquireResourceConfigCheckingLockWithIntervalChe
 }
 
 func (fake *FakeResourceConfig) AcquireResourceConfigCheckingLockWithIntervalCheckReturnsOnCall(i int, result1 lock.Lock, result2 bool, result3 error) {
+	fake.acquireResourceConfigCheckingLockWithIntervalCheckMutex.Lock()
+	defer fake.acquireResourceConfigCheckingLockWithIntervalCheckMutex.Unlock()
 	fake.AcquireResourceConfigCheckingLockWithIntervalCheckStub = nil
 	if fake.acquireResourceConfigCheckingLockWithIntervalCheckReturnsOnCall == nil {
 		fake.acquireResourceConfigCheckingLockWithIntervalCheckReturnsOnCall = make(map[int]struct {
@@ -153,7 +163,15 @@ func (fake *FakeResourceConfig) CreatedByBaseResourceTypeCallCount() int {
 	return len(fake.createdByBaseResourceTypeArgsForCall)
 }
 
+func (fake *FakeResourceConfig) CreatedByBaseResourceTypeCalls(stub func() *db.UsedBaseResourceType) {
+	fake.createdByBaseResourceTypeMutex.Lock()
+	defer fake.createdByBaseResourceTypeMutex.Unlock()
+	fake.CreatedByBaseResourceTypeStub = stub
+}
+
 func (fake *FakeResourceConfig) CreatedByBaseResourceTypeReturns(result1 *db.UsedBaseResourceType) {
+	fake.createdByBaseResourceTypeMutex.Lock()
+	defer fake.createdByBaseResourceTypeMutex.Unlock()
 	fake.CreatedByBaseResourceTypeStub = nil
 	fake.createdByBaseResourceTypeReturns = struct {
 		result1 *db.UsedBaseResourceType
@@ -161,6 +179,8 @@ func (fake *FakeResourceConfig) CreatedByBaseResourceTypeReturns(result1 *db.Use
 }
 
 func (fake *FakeResourceConfig) CreatedByBaseResourceTypeReturnsOnCall(i int, result1 *db.UsedBaseResourceType) {
+	fake.createdByBaseResourceTypeMutex.Lock()
+	defer fake.createdByBaseResourceTypeMutex.Unlock()
 	fake.CreatedByBaseResourceTypeStub = nil
 	if fake.createdByBaseResourceTypeReturnsOnCall == nil {
 		fake.createdByBaseResourceTypeReturnsOnCall = make(map[int]struct {
@@ -195,7 +215,15 @@ func (fake *FakeResourceConfig) CreatedByResourceCacheCallCount() int {
 	return len(fake.createdByResourceCacheArgsForCall)
 }
 
+func (fake *FakeResourceConfig) CreatedByResourceCacheCalls(stub func() db.UsedResourceCache) {
+	fake.createdByResourceCacheMutex.Lock()
+	defer fake.createdByResourceCacheMutex.Unlock()
+	fake.CreatedByResourceCacheStub = stub
+}
+
 func (fake *FakeResourceConfig) CreatedByResourceCacheReturns(result1 db.UsedResourceCache) {
+	fake.createdByResourceCacheMutex.Lock()
+	defer fake.createdByResourceCacheMutex.Unlock()
 	fake.CreatedByResourceCacheStub = nil
 	fake.createdByResourceCacheReturns = struct {
 		result1 db.UsedResourceCache
@@ -203,6 +231,8 @@ func (fake *FakeResourceConfig) CreatedByResourceCacheReturns(result1 db.UsedRes
 }
 
 func (fake *FakeResourceConfig) CreatedByResourceCacheReturnsOnCall(i int, result1 db.UsedResourceCache) {
+	fake.createdByResourceCacheMutex.Lock()
+	defer fake.createdByResourceCacheMutex.Unlock()
 	fake.CreatedByResourceCacheStub = nil
 	if fake.createdByResourceCacheReturnsOnCall == nil {
 		fake.createdByResourceCacheReturnsOnCall = make(map[int]struct {
@@ -237,7 +267,15 @@ func (fake *FakeResourceConfig) IDCallCount() int {
 	return len(fake.iDArgsForCall)
 }
 
+func (fake *FakeResourceConfig) IDCalls(stub func() int) {
+	fake.iDMutex.Lock()
+	defer fake.iDMutex.Unlock()
+	fake.IDStub = stub
+}
+
 func (fake *FakeResourceConfig) IDReturns(result1 int) {
+	fake.iDMutex.Lock()
+	defer fake.iDMutex.Unlock()
 	fake.IDStub = nil
 	fake.iDReturns = struct {
 		result1 int
@@ -245,6 +283,8 @@ func (fake *FakeResourceConfig) IDReturns(result1 int) {
 }
 
 func (fake *FakeResourceConfig) IDReturnsOnCall(i int, result1 int) {
+	fake.iDMutex.Lock()
+	defer fake.iDMutex.Unlock()
 	fake.IDStub = nil
 	if fake.iDReturnsOnCall == nil {
 		fake.iDReturnsOnCall = make(map[int]struct {
@@ -279,7 +319,15 @@ func (fake *FakeResourceConfig) OriginBaseResourceTypeCallCount() int {
 	return len(fake.originBaseResourceTypeArgsForCall)
 }
 
+func (fake *FakeResourceConfig) OriginBaseResourceTypeCalls(stub func() *db.UsedBaseResourceType) {
+	fake.originBaseResourceTypeMutex.Lock()
+	defer fake.originBaseResourceTypeMutex.Unlock()
+	fake.OriginBaseResourceTypeStub = stub
+}
+
 func (fake *FakeResourceConfig) OriginBaseResourceTypeReturns(result1 *db.UsedBaseResourceType) {
+	fake.originBaseResourceTypeMutex.Lock()
+	defer fake.originBaseResourceTypeMutex.Unlock()
 	fake.OriginBaseResourceTypeStub = nil
 	fake.originBaseResourceTypeReturns = struct {
 		result1 *db.UsedBaseResourceType
@@ -287,6 +335,8 @@ func (fake *FakeResourceConfig) OriginBaseResourceTypeReturns(result1 *db.UsedBa
 }
 
 func (fake *FakeResourceConfig) OriginBaseResourceTypeReturnsOnCall(i int, result1 *db.UsedBaseResourceType) {
+	fake.originBaseResourceTypeMutex.Lock()
+	defer fake.originBaseResourceTypeMutex.Unlock()
 	fake.OriginBaseResourceTypeStub = nil
 	if fake.originBaseResourceTypeReturnsOnCall == nil {
 		fake.originBaseResourceTypeReturnsOnCall = make(map[int]struct {
