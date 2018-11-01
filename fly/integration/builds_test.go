@@ -1,6 +1,7 @@
 package integration_test
 
 import (
+	"fmt"
 	"net/http"
 	"os/exec"
 	"time"
@@ -755,6 +756,58 @@ var _ = Describe("Fly CLI", func() {
 				Eventually(session).Should(gexec.Exit(0))
 			})
 
+		})
+
+		Context("when passing a time range", func() {
+			var (
+				since time.Time
+				until time.Time
+			)
+
+			const timeLayout = "2006-01-02 15:04:05"
+
+			BeforeEach(func() {
+				since = time.Date(2020, 11, 1, 0, 0, 0, 0, time.UTC)
+				until = time.Date(2020, 11, 2, 0, 0, 0, 0, time.UTC)
+
+				expectedURL = "/api/v1/builds"
+				queryParams = fmt.Sprintf("limit=50&since=%d&until=%d&timestamps=true", since.Unix(), until.Unix())
+				returnedStatusCode = http.StatusOK
+				returnedBuilds = []atc.Build{
+					{
+						ID:           3,
+						PipelineName: "some-pipeline",
+						JobName:      "some-job",
+						Name:         "63",
+						Status:       "succeeded",
+						StartTime:    succeededBuildStartTime.Unix(),
+						EndTime:      succeededBuildEndTime.Unix(),
+						TeamName:     "team1",
+					},
+				}
+
+				cmdArgs = append(cmdArgs, "--since", since.Format(timeLayout))
+				cmdArgs = append(cmdArgs, "--until", until.Format(timeLayout))
+			})
+
+			FIt("returns the correct builds", func() {
+				Eventually(session.Out).Should(PrintTable(ui.Table{
+					Headers: expectedHeaders,
+					Data: []ui.TableRow{
+						{
+							{Contents: "3"},
+							{Contents: "some-pipeline/some-job"},
+							{Contents: "63"},
+							{Contents: "succeeded"},
+							{Contents: succeededBuildStartTime.Local().Format(timeDateLayout)},
+							{Contents: succeededBuildEndTime.Local().Format(timeDateLayout)},
+							{Contents: "1h15m0s"},
+							{Contents: "team1"},
+						},
+					},
+				}))
+				Eventually(session).Should(gexec.Exit(0))
+			})
 		})
 
 		Context("when passing the pipeline argument", func() {

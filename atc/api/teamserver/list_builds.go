@@ -50,7 +50,7 @@ func (s *Server) ListTeamBuilds(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	fmt.Printf("******************\n %+v", timestamps)
+
 	if timestamps == ""	 {
 		builds, pagination, err = team.Builds(page)
 	} else {

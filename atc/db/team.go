@@ -48,7 +48,6 @@ type Team interface {
 	CreateOneOffBuild() (Build, error)
 	PrivateAndPublicBuilds(Page) ([]Build, Pagination, error)
 	Builds(page Page) ([]Build, Pagination, error)
-	// CC: maybe a different name?
 	BuildsInTimeRange(page Page) ([]Build, Pagination, error)
 
 	SaveWorker(atcWorker atc.Worker, ttl time.Duration) (Worker, error)
