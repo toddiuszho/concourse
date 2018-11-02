@@ -774,7 +774,8 @@ func (p *pipeline) Resource(name string) (Resource, bool, error) {
 }
 
 func (p *pipeline) Builds(page Page) ([]Build, Pagination, error) {
-	return getBuildsWithPagination(buildsQuery.Where(sq.Eq{"b.pipeline_id": p.id}), page, p.conn, p.lockFactory)
+	return getBuildsWithPagination(
+			buildsQuery.Where(sq.Eq{"b.pipeline_id": p.id}), minMaxIdQuery,page, p.conn, p.lockFactory)
 }
 
 func (p *pipeline) Resources() (Resources, error) {

@@ -1,34 +1,22 @@
 package testflight_test
 
 import (
+	"encoding/json"
+	"fmt"
+	"time"
+
+	"github.com/onsi/gomega/gbytes"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/gbytes"
 )
-// Test cases:
-//
-// - when no flag is passed; shows builds from exposed pipelines
-// - when team flag is passed; shows builds only for the your current team
-// - when --filter-team flag is passed:
-// - when you specify a team you don't have access to
-
-
-// Later
-// add tests for the --since --until
-
-
-
-// - when no flag is passed; shows builds from exposed pipelines
-// - set 2 pipelines, 1 is exposed and one is not.
-// - trigger a single build for the 2 pipelines.
-// expect fly builds to return only the build for the exposed pipeline.
 
 var _ = FDescribe("fly builds command", func() {
 	var (
-		testflightHiddenPipeline = "pipeline1"
+		testflightHiddenPipeline  = "pipeline1"
 		testflightExposedPipeline = "pipeline2"
-		mainExposedPipeline = "pipeline3"
-		mainHiddenPipeline = "pipeline4"
+		mainExposedPipeline       = "pipeline3"
+		mainHiddenPipeline        = "pipeline4"
 	)
 
 	BeforeEach(func() {
@@ -47,9 +35,8 @@ var _ = FDescribe("fly builds command", func() {
 		fly("trigger-job", "-j", inPipeline("some-passing-job"), "-w")
 	})
 
-
 	BeforeEach(func() {
-		<-(spawnFlyLogin("-n", "main").Exited)
+		wait(spawnFlyLogin("-n", "main"))
 
 		// hidden pipeline in other team
 		pipelineName = mainHiddenPipeline
@@ -63,37 +50,37 @@ var _ = FDescribe("fly builds command", func() {
 		fly("expose-pipeline", "-p", pipelineName)
 	})
 
-	AfterEach(func () {
+	AfterEach(func() {
 		var pipelinesToDestroy = []string{
-			testflightHiddenPipeline ,
+			testflightHiddenPipeline,
 			testflightExposedPipeline,
-			mainExposedPipeline 	,
-			mainHiddenPipeline 		,
-		};
+			mainExposedPipeline,
+			mainHiddenPipeline,
+		}
 
-		<-(spawnFlyLogin("-t", "main").Exited)
+		wait(spawnFlyLogin("-t", "main"))
 
 		for _, pipeline := range pipelinesToDestroy {
 			fly("destroy-pipeline", "-n", "-p", pipeline)
 		}
 	})
 
-	Context("when no flags passed", func () {
-		Context("being logged in as main", func () {
-			BeforeEach(func () {
+	Context("when no flags passed", func() {
+		Context("being logged in as main", func() {
+			BeforeEach(func() {
 				<-(spawnFlyLogin("-n", "main").Exited)
 			})
 		})
 
-		Context("being logged in as another team", func () {
+		Context("being logged in as another team", func() {
 			// TODO - create the team first
-			BeforeEach(func () {
+			BeforeEach(func() {
 				<-(spawnFlyLogin("-n", "testflight-another").Exited)
 			})
 		})
 
-		Context("being logged into custom team", func () {
-			JustBeforeEach(func () {
+		Context("being logged into custom team", func() {
+			JustBeforeEach(func() {
 				<-(spawnFlyLogin("-n", "testflight").Exited)
 			})
 
@@ -105,23 +92,73 @@ var _ = FDescribe("fly builds command", func() {
 				Expect(sess).To(gbytes.Say(testflightHiddenPipeline))
 			})
 
-			It("doesn't show builds from non-exposed", func () {
+			It("doesn't show builds from non-exposed", func() {
 				sess := spawnFly("builds", "--team")
 				<-sess.Exited
 				Expect(sess.ExitCode()).To(Equal(0))
 				Expect(sess).NotTo(gbytes.Say(mainHiddenPipeline))
 			})
 		})
-
 	})
-	Context("when specifying values for team flag", func () {
-		BeforeEach(func () {
-			<-(spawnFlyLogin("-n", "main").Exited)
+
+	Context("when specifying since and until", func() {
+		type decodedBuild struct {
+			Id        int   `json:"id"`
+			StartTime int64 `json:"start_time"`
+		}
+
+		var allDecodedBuilds []decodedBuild
+
+		const timeLayout = "2006-01-02 15:04:05"
+
+		BeforeEach(func() {
+			wait(spawnFlyLogin("-n", "main"))
+
+			pipelineName = mainExposedPipeline
+
+			fly("trigger-job", "-j", inPipeline("some-passing-job"), "-w")
+			fly("trigger-job", "-j", inPipeline("some-passing-job"), "-w")
+			fly("trigger-job", "-j", inPipeline("some-passing-job"), "-w")
+			fly("trigger-job", "-j", inPipeline("some-passing-job"), "-w")
+
+			sess := spawnFly("builds", "-j", inPipeline("some-passing-job"), "--json")
+			<-sess.Exited
+			Expect(sess.ExitCode()).To(Equal(0))
+
+			err := json.Unmarshal(sess.Out.Contents(), &allDecodedBuilds)
+			Expect(err).ToNot(HaveOccurred())
 		})
 
-		FIt("retrieves only builds for the teams specified", func () {
+		FIt("displays only builds that happened within that range of time", func() {
+			fmt.Printf("UNTIL=%d\n",allDecodedBuilds[1].StartTime)
+			fmt.Printf("SINCE=%d\n",allDecodedBuilds[3].StartTime)
+
+			sess := spawnFly("builds",
+				"--until="+time.Unix(allDecodedBuilds[1].StartTime, 0).Format(timeLayout),
+				"--since="+time.Unix(allDecodedBuilds[3].StartTime, 0).Format(timeLayout),
+				"-j", inPipeline("some-passing-job"),
+				"--json")
+			<-sess.Exited
+			Expect(sess.ExitCode()).To(Equal(0))
+
+			var decodedBuilds []decodedBuild
+			err := json.Unmarshal(sess.Out.Contents(), &decodedBuilds)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(decodedBuilds).To(ConsistOf(allDecodedBuilds[1], allDecodedBuilds[2], allDecodedBuilds[3]))
+		})
+	})
+
+	Context("when specifying values for team flag", func() {
+		BeforeEach(func() {
+			wait(spawnFlyLogin("-n", "main"))
+		})
+
+		It("retrieves only builds for the teams specified", func() {
+			// TODO use enventually
 			sess := spawnFly("builds", "--team=testflight")
 			<-sess.Exited
+
 			Expect(sess.ExitCode()).To(Equal(0))
 			Expect(sess).To(gbytes.Say(testflightExposedPipeline))
 			Expect(sess).To(gbytes.Say("testflight"), "shows the team name")
@@ -129,3 +166,4 @@ var _ = FDescribe("fly builds command", func() {
 		})
 	})
 })
+

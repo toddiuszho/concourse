@@ -34,6 +34,9 @@ var buildsQuery = psql.Select("b.id, b.name, b.job_id, b.team_id, b.status, b.ma
 	JoinClause("LEFT OUTER JOIN pipelines p ON b.pipeline_id = p.id").
 	JoinClause("LEFT OUTER JOIN teams t ON b.team_id = t.id")
 
+var minMaxIdQuery = psql.Select("COALESCE(MAX(id), 0)", "COALESCE(MIN(id), 0)").
+		From("builds")
+
 //go:generate counterfeiter . Build
 
 type Build interface {

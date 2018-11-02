@@ -65,7 +65,7 @@ func (f *buildFactory) VisibleBuildsWithTime(teamNames []string, page Page) ([]B
 			sq.Eq{"p.public": true},
 			sq.Eq{"t.name": teamNames},
 		})
-	return getBuildsWithDates(newBuildsQuery, page, f.conn, f.lockFactory)
+	return getBuildsWithDates(newBuildsQuery, minMaxIdQuery,page, f.conn, f.lockFactory)
 }
 
 func (f *buildFactory) VisibleBuilds(teamNames []string, page Page) ([]Build, Pagination, error) {
@@ -75,11 +75,14 @@ func (f *buildFactory) VisibleBuilds(teamNames []string, page Page) ([]Build, Pa
 			sq.Eq{"t.name": teamNames},
 		})
 
-	return getBuildsWithPagination(newBuildsQuery, page, f.conn, f.lockFactory)
+	return getBuildsWithPagination(newBuildsQuery, minMaxIdQuery,
+			page, f.conn, f.lockFactory)
 }
 
 func (f *buildFactory) PublicBuilds(page Page) ([]Build, Pagination, error) {
-	return getBuildsWithPagination(buildsQuery.Where(sq.Eq{"p.public": true}), page, f.conn, f.lockFactory)
+	return getBuildsWithPagination(
+			buildsQuery.Where(sq.Eq{"p.public": true}), minMaxIdQuery,
+			page, f.conn, f.lockFactory)
 }
 
 func (f *buildFactory) MarkNonInterceptibleBuilds() error {
@@ -142,7 +145,7 @@ func getBuilds(buildsQuery sq.SelectBuilder, conn Conn, lockFactory lock.LockFac
 	return bs, nil
 }
 
-func getBuildsWithDates(buildsQuery sq.SelectBuilder, page Page, conn Conn, lockFactory lock.LockFactory) ([]Build, Pagination, error) {
+func getBuildsWithDates(buildsQuery, minMaxIdQuery sq.SelectBuilder, page Page, conn Conn, lockFactory lock.LockFactory) ([]Build, Pagination, error) {
 	var newPage = Page{Limit: page.Limit}
 
 	if page.Since != 0 {
@@ -205,10 +208,10 @@ func getBuildsWithDates(buildsQuery sq.SelectBuilder, page Page, conn Conn, lock
 		}
 	}
 
-	return getBuildsWithPagination(buildsQuery, newPage, conn, lockFactory)
+	return getBuildsWithPagination(buildsQuery, minMaxIdQuery, newPage, conn, lockFactory)
 }
 
-func getBuildsWithPagination(buildsQuery sq.SelectBuilder, page Page, conn Conn, lockFactory lock.LockFactory) ([]Build, Pagination, error) {
+func getBuildsWithPagination(buildsQuery, minMaxIdQuery sq.SelectBuilder, page Page, conn Conn, lockFactory lock.LockFactory) ([]Build, Pagination, error) {
 	var (
 		rows    *sql.Rows
 		err     error
@@ -273,8 +276,7 @@ func getBuildsWithPagination(buildsQuery sq.SelectBuilder, page Page, conn Conn,
 	}
 
 	var minID, maxID int
-	err = psql.Select("COALESCE(MAX(id), 0)", "COALESCE(MIN(id), 0)").
-		From("builds").
+	err = minMaxIdQuery.
 		RunWith(conn).
 		QueryRow().
 		Scan(&maxID, &minID)
