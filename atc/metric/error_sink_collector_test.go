@@ -52,6 +52,20 @@ var _ = Describe("ErrorSinkCollector", func() {
 				_, event := emitter.EmitArgsForCall(0)
 				Expect(event.Attributes).To(HaveKeyWithValue("message", "err-msg"))
 			})
+
+			Context("with error being from failed emission", func() {
+				BeforeEach(func() {
+					log = lager.LogFormat{
+						Message:  "message",
+						LogLevel: lager.ERROR,
+						Error: metric.ErrFailedToEmit,
+					}
+				})
+
+				It("doesn't emit", func() {
+					Consistently(emitter.EmitCallCount).Should(BeNumerically("==", 0))
+				})
+			})
 		})
 
 		Context("with message of non-ERROR level", func() {
