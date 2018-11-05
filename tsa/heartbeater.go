@@ -13,8 +13,8 @@ import (
 	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/garden"
 	"code.cloudfoundry.org/lager"
-	"github.com/concourse/concourse/atc"
 	"github.com/concourse/baggageclaim"
+	"github.com/concourse/concourse/atc"
 	"github.com/tedsuo/ifrit"
 	"github.com/tedsuo/rata"
 )

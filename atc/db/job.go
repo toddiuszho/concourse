@@ -187,22 +187,24 @@ func (j *job) UpdateFirstLoggedBuildID(newFirstLoggedBuildID int) error {
 func (j *job) BuildsWithTime(page Page) ([]Build, Pagination, error) {
 	newBuildsQuery := buildsQuery.Where(sq.Eq{"j.id": j.id})
 	newMinMaxIdQuery := minMaxIdQuery.
+		Join("jobs j ON b.job_id = j.id").
 		Where(sq.Eq{
 			"j.name":        j.name,
 			"j.pipeline_id": j.pipelineID,
 		})
-	return getBuildsWithDates(newBuildsQuery, newMinMaxIdQuery,page, j.conn, j.lockFactory)
+	return getBuildsWithDates(newBuildsQuery, newMinMaxIdQuery, page, j.conn, j.lockFactory)
 }
 
 func (j *job) Builds(page Page) ([]Build, Pagination, error) {
 	newBuildsQuery := buildsQuery.Where(sq.Eq{"j.id": j.id})
 	newMinMaxIdQuery := minMaxIdQuery.
-	Where(sq.Eq{
-		"j.name":        j.name,
-		"j.pipeline_id": j.pipelineID,
-	})
+		Join("jobs j ON b.job_id = j.id").
+		Where(sq.Eq{
+			"j.name":        j.name,
+			"j.pipeline_id": j.pipelineID,
+		})
 
-	return getBuildsWithPagination(newBuildsQuery, newMinMaxIdQuery,page, j.conn, j.lockFactory)
+	return getBuildsWithPagination(newBuildsQuery, newMinMaxIdQuery, page, j.conn, j.lockFactory)
 }
 
 func (j *job) Build(name string) (Build, bool, error) {

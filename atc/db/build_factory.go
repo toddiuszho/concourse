@@ -65,7 +65,7 @@ func (f *buildFactory) VisibleBuildsWithTime(teamNames []string, page Page) ([]B
 			sq.Eq{"p.public": true},
 			sq.Eq{"t.name": teamNames},
 		})
-	return getBuildsWithDates(newBuildsQuery, minMaxIdQuery,page, f.conn, f.lockFactory)
+	return getBuildsWithDates(newBuildsQuery, minMaxIdQuery, page, f.conn, f.lockFactory)
 }
 
 func (f *buildFactory) VisibleBuilds(teamNames []string, page Page) ([]Build, Pagination, error) {
@@ -76,13 +76,13 @@ func (f *buildFactory) VisibleBuilds(teamNames []string, page Page) ([]Build, Pa
 		})
 
 	return getBuildsWithPagination(newBuildsQuery, minMaxIdQuery,
-			page, f.conn, f.lockFactory)
+		page, f.conn, f.lockFactory)
 }
 
 func (f *buildFactory) PublicBuilds(page Page) ([]Build, Pagination, error) {
 	return getBuildsWithPagination(
-			buildsQuery.Where(sq.Eq{"p.public": true}), minMaxIdQuery,
-			page, f.conn, f.lockFactory)
+		buildsQuery.Where(sq.Eq{"p.public": true}), minMaxIdQuery,
+		page, f.conn, f.lockFactory)
 }
 
 func (f *buildFactory) MarkNonInterceptibleBuilds() error {
@@ -145,13 +145,14 @@ func getBuilds(buildsQuery sq.SelectBuilder, conn Conn, lockFactory lock.LockFac
 	return bs, nil
 }
 
+// Here is when everything is inverted!
 func getBuildsWithDates(buildsQuery, minMaxIdQuery sq.SelectBuilder, page Page, conn Conn, lockFactory lock.LockFactory) ([]Build, Pagination, error) {
 	var newPage = Page{Limit: page.Limit}
 
 	if page.Since != 0 {
 		sinceRow, err := buildsQuery.
-			Where(sq.Expr("b.start_time <= to_timestamp(" + strconv.Itoa(page.Since) + ")")).
-			OrderBy("b.id DESC").
+			Where(sq.Expr("b.start_time >= to_timestamp(" + strconv.Itoa(page.Since) + ")")).
+			OrderBy("b.id ASC").
 			Limit(1).
 			RunWith(conn).
 			Query()
@@ -176,14 +177,14 @@ func getBuildsWithDates(buildsQuery, minMaxIdQuery sq.SelectBuilder, page Page, 
 			//Adding one in order to make the range inclusive
 			//of the current build.ID()
 			//since the getBuildsWithPagination is exclusive.
-			newPage.Since = build.ID() + 1
+			newPage.Until = build.ID() - 1
 		}
 	}
 
 	if page.Until != 0 {
 		untilRow, err := buildsQuery.
-			Where(sq.Expr("b.start_time >= to_timestamp(" + strconv.Itoa(page.Until) + ")")).
-			OrderBy("b.id ASC").
+			Where(sq.Expr("b.start_time <= to_timestamp(" + strconv.Itoa(page.Until) + ")")).
+			OrderBy("b.id DESC").
 			Limit(1).
 			RunWith(conn).
 			Query()
@@ -204,7 +205,7 @@ func getBuildsWithDates(buildsQuery, minMaxIdQuery sq.SelectBuilder, page Page, 
 			//subtracting one in order to make the range inclusive
 			//of the current build.ID()
 			//since the getBuildsWithPagination is exclusive.
-			newPage.Until = build.ID() - 1
+			newPage.Since = build.ID() + 1
 		}
 	}
 
@@ -218,9 +219,10 @@ func getBuildsWithPagination(buildsQuery, minMaxIdQuery sq.SelectBuilder, page P
 		reverse bool
 	)
 
-	if page.Limit > 0 {
-		buildsQuery = buildsQuery.Limit(uint64(page.Limit))
-	}
+	// CC: remember to add limits to the other ones
+	// if page.Limit > 0 {
+	buildsQuery = buildsQuery.Limit(uint64(page.Limit))
+	// }
 
 	if page.Since == 0 && page.Until == 0 { // none
 		buildsQuery = buildsQuery.

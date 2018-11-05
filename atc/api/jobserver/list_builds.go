@@ -14,12 +14,12 @@ import (
 func (s *Server) ListJobBuilds(pipeline db.Pipeline) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var (
-			builds []db.Build
+			builds     []db.Build
 			pagination db.Pagination
-			err    error
-			until  int
-			since  int
-			limit  int
+			err        error
+			until      int
+			since      int
+			limit      int
 		)
 
 		logger := s.logger.Session("list-job-builds")
@@ -65,7 +65,6 @@ func (s *Server) ListJobBuilds(pipeline db.Pipeline) http.Handler {
 				Until: until,
 				Limit: limit,
 			})
-
 		}
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)

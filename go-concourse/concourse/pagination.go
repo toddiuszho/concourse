@@ -43,9 +43,9 @@ func paginationFromHeaders(header http.Header) (Pagination, error) {
 }
 
 type Page struct {
-	Since int
-	Until int
-	Limit int
+	Since      int
+	Until      int
+	Limit      int
 	Timestamps bool
 }
 

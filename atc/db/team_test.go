@@ -1152,7 +1152,7 @@ var _ = Describe("Team", func() {
 		})
 	})
 
-	Describe("BuildsInTimeRange", func() {
+	Describe("BuildsWithTime", func() {
 		var (
 			pipeline db.Pipeline
 			builds   = make([]db.Build, 4)
@@ -1197,17 +1197,17 @@ var _ = Describe("Team", func() {
 
 		Context("When not providing boundaries", func() {
 			Context("without a limit specified", func() {
-				It("returns all builds", func() {
-					returnedBuilds, _, err := team.BuildsInTimeRange(db.Page{})
+				It("returns no builds", func() {
+					returnedBuilds, _, err := team.BuildsWithTime(db.Page{})
 					Expect(err).NotTo(HaveOccurred())
 
-					Expect(returnedBuilds).To(ConsistOf(builds))
+					Expect(returnedBuilds).To(BeEmpty())
 				})
 			})
 
 			Context("when a limit specified", func() {
 				It("returns a subset of the builds", func() {
-					returnedBuilds, _, err := team.BuildsInTimeRange(db.Page{
+					returnedBuilds, _, err := team.BuildsWithTime(db.Page{
 						Limit: 2,
 					})
 					Expect(err).NotTo(HaveOccurred())
@@ -1218,10 +1218,11 @@ var _ = Describe("Team", func() {
 		})
 
 		Context("When providing boundaries", func() {
-			Context("only since", func() {
-				It("returns only those before since", func() {
-					returnedBuilds, _, err := team.BuildsInTimeRange(db.Page{
-						Since: int(builds[2].StartTime().Unix()),
+			Context("only until", func() {
+				It("returns only those before until", func() {
+					returnedBuilds, _, err := team.BuildsWithTime(db.Page{
+						Until: int(builds[2].StartTime().Unix()),
+						Limit: 50,
 					})
 
 					Expect(err).NotTo(HaveOccurred())
@@ -1229,10 +1230,11 @@ var _ = Describe("Team", func() {
 				})
 			})
 
-			Context("only until", func() {
-				It("returns only those after until", func() {
-					returnedBuilds, _, err := team.BuildsInTimeRange(db.Page{
-						Until: int(builds[1].StartTime().Unix()),
+			Context("only since", func() {
+				It("returns only those after since", func() {
+					returnedBuilds, _, err := team.BuildsWithTime(db.Page{
+						Since: int(builds[1].StartTime().Unix()),
+						Limit: 50,
 					})
 
 					Expect(err).NotTo(HaveOccurred())
@@ -1242,9 +1244,10 @@ var _ = Describe("Team", func() {
 
 			Context("since and until", func() {
 				It("returns only elements in the range", func() {
-					returnedBuilds, _, err := team.BuildsInTimeRange(db.Page{
-						Since: int(builds[2].StartTime().Unix()),
-						Until: int(builds[1].StartTime().Unix()),
+					returnedBuilds, _, err := team.BuildsWithTime(db.Page{
+						Until: int(builds[2].StartTime().Unix()),
+						Since: int(builds[1].StartTime().Unix()),
+						Limit: 50,
 					})
 					Expect(err).NotTo(HaveOccurred())
 					Expect(returnedBuilds).To(ConsistOf(builds[1], builds[2]))

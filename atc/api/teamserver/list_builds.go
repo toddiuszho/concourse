@@ -51,10 +51,10 @@ func (s *Server) ListTeamBuilds(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if timestamps == ""	 {
+	if timestamps == "" {
 		builds, pagination, err = team.Builds(page)
 	} else {
-		builds, pagination, err = team.BuildsInTimeRange(page)
+		builds, pagination, err = team.BuildsWithTime(page)
 	}
 	if err != nil {
 		logger.Error("failed-to-get-team-builds", err)

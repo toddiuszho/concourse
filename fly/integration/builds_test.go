@@ -18,6 +18,7 @@ import (
 )
 
 const timeDateLayout = "2006-01-02@15:04:05-0700"
+const timeLayout = "2006-01-02 15:04:05"
 
 var _ = Describe("Fly CLI", func() {
 	var (
@@ -406,6 +407,24 @@ var _ = Describe("Fly CLI", func() {
 				})
 			})
 
+			Context("and time range", func() {
+				BeforeEach(func() {
+					since := time.Date(2020, 11, 1, 0, 0, 0, 0, time.Now().Location())
+					until := time.Date(2020, 11, 2, 0, 0, 0, 0, time.Now().Location())
+
+					cmdArgs = append(cmdArgs, "-j")
+					cmdArgs = append(cmdArgs, "some-pipeline/some-job")
+					cmdArgs = append(cmdArgs, "--since", since.Format(timeLayout))
+					cmdArgs = append(cmdArgs, "--until", until.Format(timeLayout))
+
+					queryParams = fmt.Sprintf("limit=50&since=%d&until=%d&timestamps=true", since.Unix(), until.Unix())
+				})
+
+				It("returns the builds correctly", func() {
+					Eventually(session).Should(gexec.Exit(0))
+				})
+			})
+
 			Context("and the count argument", func() {
 				BeforeEach(func() {
 					cmdArgs = append(cmdArgs, "-j")
@@ -764,11 +783,9 @@ var _ = Describe("Fly CLI", func() {
 				until time.Time
 			)
 
-			const timeLayout = "2006-01-02 15:04:05"
-
 			BeforeEach(func() {
-				since = time.Date(2020, 11, 1, 0, 0, 0, 0, time.UTC)
-				until = time.Date(2020, 11, 2, 0, 0, 0, 0, time.UTC)
+				since = time.Date(2020, 11, 1, 0, 0, 0, 0, time.Now().Location())
+				until = time.Date(2020, 11, 2, 0, 0, 0, 0, time.Now().Location())
 
 				expectedURL = "/api/v1/builds"
 				queryParams = fmt.Sprintf("limit=50&since=%d&until=%d&timestamps=true", since.Unix(), until.Unix())
@@ -790,7 +807,7 @@ var _ = Describe("Fly CLI", func() {
 				cmdArgs = append(cmdArgs, "--until", until.Format(timeLayout))
 			})
 
-			FIt("returns the correct builds", func() {
+			It("returns the correct builds", func() {
 				Eventually(session.Out).Should(PrintTable(ui.Table{
 					Headers: expectedHeaders,
 					Data: []ui.TableRow{
@@ -909,7 +926,24 @@ var _ = Describe("Fly CLI", func() {
 					Eventually(session).Should(gexec.Exit(0))
 				})
 			})
+
+			Context("and time range", func() {
+				BeforeEach(func() {
+					since := time.Date(2020, 11, 1, 0, 0, 0, 0, time.Now().Location())
+					until := time.Date(2020, 11, 2, 0, 0, 0, 0, time.Now().Location())
+
+					cmdArgs = append(cmdArgs, "-p")
+					cmdArgs = append(cmdArgs, "some-pipeline")
+					cmdArgs = append(cmdArgs, "--since", since.Format(timeLayout))
+					cmdArgs = append(cmdArgs, "--until", until.Format(timeLayout))
+
+					queryParams = fmt.Sprintf("limit=50&since=%d&until=%d&timestamps=true", since.Unix(), until.Unix())
+				})
+
+				It("returns the builds correctly", func() {
+					Eventually(session).Should(gexec.Exit(0))
+				})
+			})
 		})
 	})
 })
-

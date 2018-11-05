@@ -11,7 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = FDescribe("fly builds command", func() {
+var _ = Describe("fly builds command", func() {
 	var (
 		testflightHiddenPipeline  = "pipeline1"
 		testflightExposedPipeline = "pipeline2"
@@ -91,13 +91,6 @@ var _ = FDescribe("fly builds command", func() {
 				Expect(sess).To(gbytes.Say(testflightExposedPipeline))
 				Expect(sess).To(gbytes.Say(testflightHiddenPipeline))
 			})
-
-			It("doesn't show builds from non-exposed", func() {
-				sess := spawnFly("builds", "--team")
-				<-sess.Exited
-				Expect(sess.ExitCode()).To(Equal(0))
-				Expect(sess).NotTo(gbytes.Say(mainHiddenPipeline))
-			})
 		})
 	})
 
@@ -129,13 +122,12 @@ var _ = FDescribe("fly builds command", func() {
 			Expect(err).ToNot(HaveOccurred())
 		})
 
-		FIt("displays only builds that happened within that range of time", func() {
-			fmt.Printf("UNTIL=%d\n",allDecodedBuilds[1].StartTime)
-			fmt.Printf("SINCE=%d\n",allDecodedBuilds[3].StartTime)
-
+		It("displays only builds that happened within that range of time", func() {
+			fmt.Println("NO LOCAL: ", time.Unix(allDecodedBuilds[1].StartTime+1, 0).Format(timeLayout))
+			fmt.Println("WITH LOCAL", time.Unix(allDecodedBuilds[1].StartTime+1, 0).Local().Format(timeLayout))
 			sess := spawnFly("builds",
-				"--until="+time.Unix(allDecodedBuilds[1].StartTime, 0).Format(timeLayout),
-				"--since="+time.Unix(allDecodedBuilds[3].StartTime, 0).Format(timeLayout),
+				"--until="+time.Unix(allDecodedBuilds[1].StartTime+1, 0).Local().Format(timeLayout),
+				"--since="+time.Unix(allDecodedBuilds[3].StartTime-1, 0).Local().Format(timeLayout),
 				"-j", inPipeline("some-passing-job"),
 				"--json")
 			<-sess.Exited
@@ -155,7 +147,6 @@ var _ = FDescribe("fly builds command", func() {
 		})
 
 		It("retrieves only builds for the teams specified", func() {
-			// TODO use enventually
 			sess := spawnFly("builds", "--team=testflight")
 			<-sess.Exited
 
@@ -166,4 +157,3 @@ var _ = FDescribe("fly builds command", func() {
 		})
 	})
 })
-

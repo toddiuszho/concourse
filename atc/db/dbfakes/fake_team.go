@@ -47,17 +47,17 @@ type FakeTeam struct {
 		result2 db.Pagination
 		result3 error
 	}
-	BuildsInTimeRangeStub        func(db.Page) ([]db.Build, db.Pagination, error)
-	buildsInTimeRangeMutex       sync.RWMutex
-	buildsInTimeRangeArgsForCall []struct {
+	BuildsWithTimeStub        func(db.Page) ([]db.Build, db.Pagination, error)
+	buildsWithTimeMutex       sync.RWMutex
+	buildsWithTimeArgsForCall []struct {
 		arg1 db.Page
 	}
-	buildsInTimeRangeReturns struct {
+	buildsWithTimeReturns struct {
 		result1 []db.Build
 		result2 db.Pagination
 		result3 error
 	}
-	buildsInTimeRangeReturnsOnCall map[int]struct {
+	buildsWithTimeReturnsOnCall map[int]struct {
 		result1 []db.Build
 		result2 db.Pagination
 		result3 error
@@ -541,66 +541,66 @@ func (fake *FakeTeam) BuildsReturnsOnCall(i int, result1 []db.Build, result2 db.
 	}{result1, result2, result3}
 }
 
-func (fake *FakeTeam) BuildsInTimeRange(arg1 db.Page) ([]db.Build, db.Pagination, error) {
-	fake.buildsInTimeRangeMutex.Lock()
-	ret, specificReturn := fake.buildsInTimeRangeReturnsOnCall[len(fake.buildsInTimeRangeArgsForCall)]
-	fake.buildsInTimeRangeArgsForCall = append(fake.buildsInTimeRangeArgsForCall, struct {
+func (fake *FakeTeam) BuildsWithTime(arg1 db.Page) ([]db.Build, db.Pagination, error) {
+	fake.buildsWithTimeMutex.Lock()
+	ret, specificReturn := fake.buildsWithTimeReturnsOnCall[len(fake.buildsWithTimeArgsForCall)]
+	fake.buildsWithTimeArgsForCall = append(fake.buildsWithTimeArgsForCall, struct {
 		arg1 db.Page
 	}{arg1})
-	fake.recordInvocation("BuildsInTimeRange", []interface{}{arg1})
-	fake.buildsInTimeRangeMutex.Unlock()
-	if fake.BuildsInTimeRangeStub != nil {
-		return fake.BuildsInTimeRangeStub(arg1)
+	fake.recordInvocation("BuildsWithTime", []interface{}{arg1})
+	fake.buildsWithTimeMutex.Unlock()
+	if fake.BuildsWithTimeStub != nil {
+		return fake.BuildsWithTimeStub(arg1)
 	}
 	if specificReturn {
 		return ret.result1, ret.result2, ret.result3
 	}
-	fakeReturns := fake.buildsInTimeRangeReturns
+	fakeReturns := fake.buildsWithTimeReturns
 	return fakeReturns.result1, fakeReturns.result2, fakeReturns.result3
 }
 
-func (fake *FakeTeam) BuildsInTimeRangeCallCount() int {
-	fake.buildsInTimeRangeMutex.RLock()
-	defer fake.buildsInTimeRangeMutex.RUnlock()
-	return len(fake.buildsInTimeRangeArgsForCall)
+func (fake *FakeTeam) BuildsWithTimeCallCount() int {
+	fake.buildsWithTimeMutex.RLock()
+	defer fake.buildsWithTimeMutex.RUnlock()
+	return len(fake.buildsWithTimeArgsForCall)
 }
 
-func (fake *FakeTeam) BuildsInTimeRangeCalls(stub func(db.Page) ([]db.Build, db.Pagination, error)) {
-	fake.buildsInTimeRangeMutex.Lock()
-	defer fake.buildsInTimeRangeMutex.Unlock()
-	fake.BuildsInTimeRangeStub = stub
+func (fake *FakeTeam) BuildsWithTimeCalls(stub func(db.Page) ([]db.Build, db.Pagination, error)) {
+	fake.buildsWithTimeMutex.Lock()
+	defer fake.buildsWithTimeMutex.Unlock()
+	fake.BuildsWithTimeStub = stub
 }
 
-func (fake *FakeTeam) BuildsInTimeRangeArgsForCall(i int) db.Page {
-	fake.buildsInTimeRangeMutex.RLock()
-	defer fake.buildsInTimeRangeMutex.RUnlock()
-	argsForCall := fake.buildsInTimeRangeArgsForCall[i]
+func (fake *FakeTeam) BuildsWithTimeArgsForCall(i int) db.Page {
+	fake.buildsWithTimeMutex.RLock()
+	defer fake.buildsWithTimeMutex.RUnlock()
+	argsForCall := fake.buildsWithTimeArgsForCall[i]
 	return argsForCall.arg1
 }
 
-func (fake *FakeTeam) BuildsInTimeRangeReturns(result1 []db.Build, result2 db.Pagination, result3 error) {
-	fake.buildsInTimeRangeMutex.Lock()
-	defer fake.buildsInTimeRangeMutex.Unlock()
-	fake.BuildsInTimeRangeStub = nil
-	fake.buildsInTimeRangeReturns = struct {
+func (fake *FakeTeam) BuildsWithTimeReturns(result1 []db.Build, result2 db.Pagination, result3 error) {
+	fake.buildsWithTimeMutex.Lock()
+	defer fake.buildsWithTimeMutex.Unlock()
+	fake.BuildsWithTimeStub = nil
+	fake.buildsWithTimeReturns = struct {
 		result1 []db.Build
 		result2 db.Pagination
 		result3 error
 	}{result1, result2, result3}
 }
 
-func (fake *FakeTeam) BuildsInTimeRangeReturnsOnCall(i int, result1 []db.Build, result2 db.Pagination, result3 error) {
-	fake.buildsInTimeRangeMutex.Lock()
-	defer fake.buildsInTimeRangeMutex.Unlock()
-	fake.BuildsInTimeRangeStub = nil
-	if fake.buildsInTimeRangeReturnsOnCall == nil {
-		fake.buildsInTimeRangeReturnsOnCall = make(map[int]struct {
+func (fake *FakeTeam) BuildsWithTimeReturnsOnCall(i int, result1 []db.Build, result2 db.Pagination, result3 error) {
+	fake.buildsWithTimeMutex.Lock()
+	defer fake.buildsWithTimeMutex.Unlock()
+	fake.BuildsWithTimeStub = nil
+	if fake.buildsWithTimeReturnsOnCall == nil {
+		fake.buildsWithTimeReturnsOnCall = make(map[int]struct {
 			result1 []db.Build
 			result2 db.Pagination
 			result3 error
 		})
 	}
-	fake.buildsInTimeRangeReturnsOnCall[i] = struct {
+	fake.buildsWithTimeReturnsOnCall[i] = struct {
 		result1 []db.Build
 		result2 db.Pagination
 		result3 error
@@ -2022,8 +2022,8 @@ func (fake *FakeTeam) Invocations() map[string][][]interface{} {
 	defer fake.authMutex.RUnlock()
 	fake.buildsMutex.RLock()
 	defer fake.buildsMutex.RUnlock()
-	fake.buildsInTimeRangeMutex.RLock()
-	defer fake.buildsInTimeRangeMutex.RUnlock()
+	fake.buildsWithTimeMutex.RLock()
+	defer fake.buildsWithTimeMutex.RUnlock()
 	fake.createContainerMutex.RLock()
 	defer fake.createContainerMutex.RUnlock()
 	fake.createOneOffBuildMutex.RLock()
