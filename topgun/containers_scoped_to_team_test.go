@@ -19,11 +19,11 @@ var _ = Describe(":life [#136140165] Container scope", func() {
 
 		It("is only hijackable by someone in that team", func() {
 			By("setting a pipeline for team `main`")
-			fly("set-pipeline", "-n", "-c", "pipelines/get-task-put-waiting.yml", "-p", "container-scope-test")
+			fly.Spawn("set-pipeline", "-n", "-c", "pipelines/get-task-put-waiting.yml", "-p", "container-scope-test")
 
 			By("triggering the build")
-			fly("unpause-pipeline", "-p", "container-scope-test")
-			buildSession := spawnFly("trigger-job", "-w", "-j", "container-scope-test/simple-job")
+			fly.Spawn("unpause-pipeline", "-p", "container-scope-test")
+			buildSession := fly.Spawn("trigger-job", "-w", "-j", "container-scope-test/simple-job")
 			Eventually(buildSession).Should(gbytes.Say("waiting for /tmp/stop-waiting"))
 
 			By("demonstrating we can hijack into all of the containers")
@@ -52,19 +52,19 @@ var _ = Describe(":life [#136140165] Container scope", func() {
 			Expect(setTeamSession.ExitCode()).To(Equal(0))
 
 			By("logging into other team")
-			fly("login", "-n", "no-access", "-u", "guest", "-p", "guest")
+			fly.Spawn("login", "-n", "no-access", "-u", "guest", "-p", "guest")
 
 			By("not allowing hijacking into any containers")
-			failedFly := spawnFly("hijack", "-b", "1")
+			failedFly := fly.Spawn("hijack", "-b", "1")
 			<-failedFly.Exited
 			Expect(failedFly.ExitCode()).NotTo(Equal(0))
 			Expect(failedFly.Err).To(gbytes.Say("no containers matched your search parameters!"))
 
 			By("logging back into the other team")
-			fly("login", "-n", "main", "-u", atcUsername, "-p", atcPassword)
+			fly.Spawn("login", "-n", "main", "-u", atcUsername, "-p", atcPassword)
 
 			By("stopping the build")
-			hijackSession := spawnFly(
+			hijackSession := fly.Spawn(
 				"hijack",
 				"-b", "1",
 				"-s", "simple-task",

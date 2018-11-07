@@ -40,7 +40,7 @@ var _ = Describe(":life Garbage collecting build containers", func() {
 		Context("one-off builds", func() {
 			It("is removed from the database and worker [#129725995]", func() {
 				By("running a task with container having a rootfs, input, and output volume")
-				fly("execute", "-c", "tasks/input-output.yml", "-i", "some-input=./tasks")
+				fly.Spawn("execute", "-c", "tasks/input-output.yml", "-i", "some-input=./tasks")
 
 				By("collecting the build containers")
 				buildContainerHandles := getContainers("build id", "1")
@@ -72,13 +72,13 @@ var _ = Describe(":life Garbage collecting build containers", func() {
 		Context("pipeline builds", func() {
 			It("is removed from the database and worker [#129725995]", func() {
 				By("setting pipeline that creates containers for check, get, task, put")
-				fly("set-pipeline", "-n", "-c", "pipelines/get-task-put.yml", "-p", "build-container-gc")
+				fly.Spawn("set-pipeline", "-n", "-c", "pipelines/get-task-put.yml", "-p", "build-container-gc")
 
 				By("unpausing the pipeline")
-				fly("unpause-pipeline", "-p", "build-container-gc")
+				fly.Spawn("unpause-pipeline", "-p", "build-container-gc")
 
 				By("triggering job")
-				fly("trigger-job", "-w", "-j", "build-container-gc/simple-job")
+				fly.Spawn("trigger-job", "-w", "-j", "build-container-gc/simple-job")
 
 				By("collecting the build containers")
 				buildContainerHandles := getContainers("type", "task")
@@ -112,13 +112,13 @@ var _ = Describe(":life Garbage collecting build containers", func() {
 		Context("pipeline builds", func() {
 			It("keeps in the database and worker [#129725995]", func() {
 				By("setting pipeline that creates containers for check, get, task, put")
-				fly("set-pipeline", "-n", "-c", "pipelines/get-task-put-failing.yml", "-p", "build-container-gc")
+				fly.Spawn("set-pipeline", "-n", "-c", "pipelines/get-task-put-failing.yml", "-p", "build-container-gc")
 
 				By("unpausing the pipeline")
-				fly("unpause-pipeline", "-p", "build-container-gc")
+				fly.Spawn("unpause-pipeline", "-p", "build-container-gc")
 
 				By("triggering job")
-				<-spawnFly("trigger-job", "-w", "-j", "build-container-gc/simple-job").Exited
+				<-fly.Spawn("trigger-job", "-w", "-j", "build-container-gc/simple-job").Exited
 
 				By("collecting the build containers")
 				buildContainerHandles := getContainers("type", "task")
@@ -150,19 +150,19 @@ var _ = Describe(":life Garbage collecting build containers", func() {
 		Context("pipeline builds that fail subsequently", func() {
 			It("keeps the latest build containers in the database and worker, removes old build containers from database and worker [#129725995]", func() {
 				By("setting pipeline that creates containers for check, get, task, put")
-				fly("set-pipeline", "-n", "-c", "pipelines/get-task-put-failing.yml", "-p", "build-container-gc")
+				fly.Spawn("set-pipeline", "-n", "-c", "pipelines/get-task-put-failing.yml", "-p", "build-container-gc")
 
 				By("unpausing the pipeline")
-				fly("unpause-pipeline", "-p", "build-container-gc")
+				fly.Spawn("unpause-pipeline", "-p", "build-container-gc")
 
 				By("triggering first job")
-				<-spawnFly("trigger-job", "-w", "-j", "build-container-gc/simple-job").Exited
+				<-spawnfly.Spawn("trigger-job", "-w", "-j", "build-container-gc/simple-job").Exited
 
 				By("collecting the first build containers")
 				firstBuildContainerHandles := getContainers("type", "task")
 
 				By("triggering second job")
-				<-spawnFly("trigger-job", "-w", "-j", "build-container-gc/simple-job").Exited
+				<-fly.Spawn("trigger-job", "-w", "-j", "build-container-gc/simple-job").Exited
 
 				By("collecting the second build containers")
 				allBuildContainerHandles := getContainers("type", "task")
@@ -223,20 +223,20 @@ var _ = Describe(":life Garbage collecting build containers", func() {
 		Context("pipeline builds that is running and previous build failed", func() {
 			It("keeps both the latest and previous build containers in the database and worker [#129725995]", func() {
 				By("setting pipeline that creates containers for check, get, task, put")
-				fly("set-pipeline", "-n", "-c", "pipelines/get-task-put-failing.yml", "-p", "build-container-gc")
+				fly.Spawn("set-pipeline", "-n", "-c", "pipelines/get-task-put-failing.yml", "-p", "build-container-gc")
 
 				By("unpausing the pipeline")
-				fly("unpause-pipeline", "-p", "build-container-gc")
+				fly.Spawn("unpause-pipeline", "-p", "build-container-gc")
 
 				By("triggering first failing job")
-				<-spawnFly("trigger-job", "-w", "-j", "build-container-gc/simple-job").Exited
+				<-fly.Spawn("trigger-job", "-w", "-j", "build-container-gc/simple-job").Exited
 
 				By("collecting the first build containers")
 				firstBuildContainerHandles := getContainers("type", "task")
 
 				By("triggering second long running job")
-				fly("set-pipeline", "-n", "-c", "pipelines/get-task-put-waiting.yml", "-p", "build-container-gc")
-				runningBuildSession := spawnFly("trigger-job", "-w", "-j", "build-container-gc/simple-job")
+				fly.Spawn("set-pipeline", "-n", "-c", "pipelines/get-task-put-waiting.yml", "-p", "build-container-gc")
+				runningBuildSession := fly.Spawn("trigger-job", "-w", "-j", "build-container-gc/simple-job")
 				Eventually(runningBuildSession).Should(gbytes.Say("waiting for /tmp/stop-waiting"))
 
 				By("collecting the second build containers")
@@ -293,7 +293,7 @@ var _ = Describe(":life Garbage collecting build containers", func() {
 					Expect(existingHandles).To(ContainElement(handle))
 				}
 
-				fly("abort-build", "-j", "build-container-gc/simple-job", "-b", "2")
+				fly.Spawn("abort-build", "-j", "build-container-gc/simple-job", "-b", "2")
 
 				<-runningBuildSession.Exited
 			})

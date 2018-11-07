@@ -70,7 +70,7 @@ var _ = Describe("[#137641079] ATC Shutting down", func() {
 
 				BeforeEach(func() {
 					By("executing a task")
-					buildSession := spawnFly("execute", "-c", "tasks/wait.yml")
+					buildSession := fly.Spawn("execute", "-c", "tasks/wait.yml")
 					Eventually(buildSession).Should(gbytes.Say("executing build"))
 
 					buildRegex := regexp.MustCompile(`executing build (\d+)`)
@@ -103,12 +103,12 @@ var _ = Describe("[#137641079] ATC Shutting down", func() {
 
 					It("continues tracking the build progress", func() {
 						By("waiting for another atc to attach to process")
-						watchSession := spawnFly("watch", "-b", buildID)
+						watchSession := fly.Spawn("watch", "-b", buildID)
 						Eventually(watchSession).Should(gbytes.Say("waiting for /tmp/stop-waiting"))
 						time.Sleep(10 * time.Second)
 
 						By("hijacking the build to tell it to finish")
-						hijackSession := spawnFly(
+						hijackSession := fly.Spawn(
 							"hijack",
 							"-b", buildID,
 							"-s", "one-off",

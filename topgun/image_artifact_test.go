@@ -10,8 +10,8 @@ import (
 var _ = Describe("A job with a task using an image within the plan", func() {
 	BeforeEach(func() {
 		Deploy("deployments/concourse-different-workers.yml", "-o", "operations/other-worker-tagged.yml")
-		fly("set-pipeline", "-n", "-p", "image-artifact", "-c", "pipelines/image-artifact.yml")
-		fly("unpause-pipeline", "-p", "image-artifact")
+		fly.Spawn("set-pipeline", "-n", "-p", "image-artifact", "-c", "pipelines/image-artifact.yml")
+		fly.Spawn("unpause-pipeline", "-p", "image-artifact")
 	})
 
 	Describe("running the job", func() {
@@ -23,7 +23,7 @@ var _ = Describe("A job with a task using an image within the plan", func() {
 		})
 
 		JustBeforeEach(func() {
-			jobSession = spawnFly("trigger-job", "-w", "-j", "image-artifact/"+jobName)
+			jobSession = fly.Spawn("trigger-job", "-w", "-j", "image-artifact/"+jobName)
 			<-jobSession.Exited
 		})
 

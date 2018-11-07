@@ -30,7 +30,7 @@ var _ = Describe("Vault", func() {
 	}
 
 	getPipeline := func() *gexec.Session {
-		session := spawnFly("get-pipeline", "-p", "pipeline-vault-test")
+		session := fly.Spawn("get-pipeline", "-p", "pipeline-vault-test")
 		<-session.Exited
 		Expect(session.ExitCode()).To(Equal(0))
 		return session
@@ -90,8 +90,8 @@ var _ = Describe("Vault", func() {
 
 				It("renews the token", func() {
 					By("executing a task that parameterizes image_resource")
-					watch := spawnFly("execute", "-c", "tasks/credential-management.yml")
-					wait(watch)
+					watch := fly.Spawn("execute", "-c", "tasks/credential-management.yml")
+					Wait(watch)
 					Expect(watch).To(gbytes.Say("SECRET: Hiii"))
 
 					By("taking a dump")
@@ -158,7 +158,7 @@ var _ = Describe("Vault", func() {
 					v.Run("write", "concourse/main/pipeline-vault-test/image_resource_repository", "value=busybox")
 
 					By("setting a pipeline that contains vault secrets")
-					fly("set-pipeline", "-n", "-c", "pipelines/credential-management.yml", "-p", "pipeline-vault-test")
+					fly.Spawn("set-pipeline", "-n", "-c", "pipelines/credential-management.yml", "-p", "pipeline-vault-test")
 
 					By("getting the pipeline config")
 					session := getPipeline()
@@ -169,13 +169,13 @@ var _ = Describe("Vault", func() {
 					Expect(string(session.Out.Contents())).ToNot(ContainSubstring("busybox"))
 
 					By("unpausing the pipeline")
-					fly("unpause-pipeline", "-p", "pipeline-vault-test")
+					fly.Spawn("unpause-pipeline", "-p", "pipeline-vault-test")
 				})
 
 				It("parameterizes via Vault and leaves the pipeline uninterpolated", func() {
 					By("triggering job")
-					watch := spawnFly("trigger-job", "-w", "-j", "pipeline-vault-test/job-with-custom-input")
-					wait(watch)
+					watch := fly.Spawn("trigger-job", "-w", "-j", "pipeline-vault-test/job-with-custom-input")
+					Wait(watch)
 					Expect(watch).To(gbytes.Say("GET SECRET: GET-Hello/GET-World"))
 					Expect(watch).To(gbytes.Say("PUT SECRET: PUT-Hello/PUT-World"))
 					Expect(watch).To(gbytes.Say("GET SECRET: PUT-GET-Hello/PUT-GET-World"))
@@ -194,8 +194,8 @@ var _ = Describe("Vault", func() {
 				Context("when the job's inputs are used for a one-off build", func() {
 					It("parameterizes the values using the job's pipeline scope", func() {
 						By("triggering job to populate its inputs")
-						watch := spawnFly("trigger-job", "-w", "-j", "pipeline-vault-test/job-with-input")
-						wait(watch)
+						watch := fly.Spawn("trigger-job", "-w", "-j", "pipeline-vault-test/job-with-input")
+						Wait(watch)
 						Expect(watch).To(gbytes.Say("GET SECRET: GET-Hello/GET-World"))
 						Expect(watch).To(gbytes.Say("PUT SECRET: PUT-Hello/PUT-World"))
 						Expect(watch).To(gbytes.Say("GET SECRET: PUT-GET-Hello/PUT-GET-World"))
@@ -203,8 +203,8 @@ var _ = Describe("Vault", func() {
 						Expect(watch).To(gbytes.Say("TEAM SECRET: Sauce"))
 
 						By("executing a task that parameterizes image_resource")
-						watch = spawnFly("execute", "-c", "tasks/credential-management-with-job-inputs.yml", "-j", "pipeline-vault-test/job-with-input")
-						wait(watch)
+						watch = fly.Spawn("execute", "-c", "tasks/credential-management-with-job-inputs.yml", "-j", "pipeline-vault-test/job-with-input")
+						Wait(watch)
 						Expect(watch).To(gbytes.Say("./some-resource/input"))
 
 						By("taking a dump")
@@ -224,8 +224,8 @@ var _ = Describe("Vault", func() {
 
 				It("parameterizes image_resource and params in a task config", func() {
 					By("executing a task that parameterizes image_resource")
-					watch := spawnFly("execute", "-c", "tasks/credential-management.yml")
-					wait(watch)
+					watch := fly.Spawn("execute", "-c", "tasks/credential-management.yml")
+					Wait(watch)
 					Expect(watch).To(gbytes.Say("SECRET: Hiii"))
 
 					By("taking a dump")
@@ -374,7 +374,7 @@ func (v *vault) Run(command string, args ...string) *gexec.Session {
 
 	session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 	Expect(err).ToNot(HaveOccurred())
-	wait(session)
+	Wait(session)
 	return session
 }
 

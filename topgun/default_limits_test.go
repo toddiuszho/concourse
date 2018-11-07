@@ -16,10 +16,10 @@ var _ = Describe("an ATC with default resource limits set", func() {
 	})
 
 	It("respects the default resource limits, overridding when specified", func() {
-		buildSession := spawnFly("execute", "-c", "tasks/tiny.yml")
+		buildSession := fly.Spawn("execute", "-c", "tasks/tiny.yml")
 		<-buildSession.Exited
 
-		hijackSession := spawnFly(
+		hijackSession := fly.Spawn(
 			"hijack",
 			"-b", "1",
 			"--", "sh", "-c",
@@ -30,10 +30,10 @@ var _ = Describe("an ATC with default resource limits set", func() {
 		Expect(hijackSession.ExitCode()).To(Equal(0))
 		Expect(hijackSession).To(gbytes.Say("1073741824\n512"))
 
-		buildSession = spawnFly("execute", "-c", "tasks/limits.yml")
+		buildSession = fly.Spawn("execute", "-c", "tasks/limits.yml")
 		<-buildSession.Exited
 
-		hijackSession = spawnFly(
+		hijackSession = fly.Spawn(
 			"hijack",
 			"-b", "2",
 			"--", "sh", "-c",

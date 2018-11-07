@@ -35,7 +35,7 @@ var _ = Describe("AWS SSM", func() {
 	const pipeline = "pipeline-ssm-test"
 
 	getPipeline := func() *gexec.Session {
-		session := spawnFly("get-pipeline", "-p", pipeline)
+		session := fly.Spawn("get-pipeline", "-p", pipeline)
 		<-session.Exited
 		Expect(session.ExitCode()).To(Equal(0))
 		return session
@@ -152,7 +152,7 @@ var _ = Describe("AWS SSM", func() {
 		Context("with a pipeline build", func() {
 			BeforeEach(func() {
 				By("setting a pipeline that contains ssm secrets")
-				fly("set-pipeline", "-n", "-c", "pipelines/credential-management.yml", "-p", pipeline)
+				fly.Spawn("set-pipeline", "-n", "-c", "pipelines/credential-management.yml", "-p", pipeline)
 
 				By("getting the pipeline config")
 				session := getPipeline()
@@ -163,12 +163,12 @@ var _ = Describe("AWS SSM", func() {
 				Expect(string(session.Out.Contents())).ToNot(ContainSubstring("busybox"))
 
 				By("unpausing the pipeline")
-				fly("unpause-pipeline", "-p", pipeline)
+				fly.Spawn("unpause-pipeline", "-p", pipeline)
 			})
 			It("parameterizes via SSM and leaves the pipeline uninterpolated", func() {
 				By("triggering job")
-				watch := spawnFly("trigger-job", "-w", "-j", pipeline+"/job-with-custom-input")
-				wait(watch)
+				watch := fly.Spawn("trigger-job", "-w", "-j", pipeline+"/job-with-custom-input")
+				Wait(watch)
 				Expect(watch).To(gbytes.Say("GET SECRET: GET-Hello/GET-World"))
 				Expect(watch).To(gbytes.Say("PUT SECRET: PUT-Hello/PUT-World"))
 				Expect(watch).To(gbytes.Say("GET SECRET: PUT-GET-Hello/PUT-GET-World"))
@@ -186,8 +186,8 @@ var _ = Describe("AWS SSM", func() {
 			Context("when the job's inputs are used for a one-off build", func() {
 				It("parameterizes the values using the job's pipeline scope", func() {
 					By("triggering job to populate its inputs")
-					watch := spawnFly("trigger-job", "-w", "-j", "pipeline-ssm-test/job-with-input")
-					wait(watch)
+					watch := fly.Spawn("trigger-job", "-w", "-j", "pipeline-ssm-test/job-with-input")
+					Wait(watch)
 					Expect(watch).To(gbytes.Say("GET SECRET: GET-Hello/GET-World"))
 					Expect(watch).To(gbytes.Say("PUT SECRET: PUT-Hello/PUT-World"))
 					Expect(watch).To(gbytes.Say("GET SECRET: PUT-GET-Hello/PUT-GET-World"))
@@ -195,8 +195,8 @@ var _ = Describe("AWS SSM", func() {
 					Expect(watch).To(gbytes.Say("TEAM SECRET: Sauce"))
 
 					By("executing a task that parameterizes image_resource")
-					watch = spawnFly("execute", "-c", "tasks/credential-management-with-job-inputs.yml", "-j", "pipeline-ssm-test/job-with-input")
-					wait(watch)
+					watch = fly.Spawn("execute", "-c", "tasks/credential-management-with-job-inputs.yml", "-j", "pipeline-ssm-test/job-with-input")
+					Wait(watch)
 					Expect(watch).To(gbytes.Say("./some-resource/input"))
 
 					By("taking a dump")
@@ -209,8 +209,8 @@ var _ = Describe("AWS SSM", func() {
 			Context("with a one-off build", func() {
 				It("parameterizes image_resource and params in a task config", func() {
 					By("executing a task that parameterizes image_resource")
-					watch := spawnFly("execute", "-c", "tasks/credential-management.yml")
-					wait(watch)
+					watch := fly.Spawn("execute", "-c", "tasks/credential-management.yml")
+					Wait(watch)
 					Expect(watch).To(gbytes.Say("SECRET: Hiii"))
 
 					By("taking a dump")

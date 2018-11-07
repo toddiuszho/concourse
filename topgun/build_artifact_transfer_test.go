@@ -16,13 +16,13 @@ var _ = Describe("Passing artifacts between build steps", func() {
 
 	It("transfers bits between workers when the resource type is not supported", func() {
 		By("setting pipeline that creates containers for check, get, task, put")
-		fly("set-pipeline", "-n", "-c", "pipelines/build-artifact-transfer.yml", "-p", "build-artifacts")
+		fly.Spawn("set-pipeline", "-n", "-c", "pipelines/build-artifact-transfer.yml", "-p", "build-artifacts")
 
 		By("unpausing the pipeline")
-		fly("unpause-pipeline", "-p", "build-artifacts")
+		fly.Spawn("unpause-pipeline", "-p", "build-artifacts")
 
 		By("triggering job")
-		sess := spawnFly("trigger-job", "-w", "-j", "build-artifacts/transfer-time")
+		sess := fly.Spawn("trigger-job", "-w", "-j", "build-artifacts/transfer-time")
 		<-sess.Exited
 		Expect(sess).To(gbytes.Say("./special-time/input"))
 		Expect(sess.ExitCode()).To(Equal(0))

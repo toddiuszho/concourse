@@ -18,17 +18,17 @@ var _ = Describe("Worker failing", func() {
 			Skip("now that baggageclaim runs in the same process as everything else, it's hard to make only it become unresponsive")
 
 			By("setting a pipeline that uses the doomed worker")
-			fly("set-pipeline", "-n", "-c", "pipelines/controlled-timer-doomed-worker.yml", "-p", "worker-failing-test")
-			fly("unpause-pipeline", "-p", "worker-failing-test")
+			fly.Spawn("set-pipeline", "-n", "-c", "pipelines/controlled-timer-doomed-worker.yml", "-p", "worker-failing-test")
+			fly.Spawn("unpause-pipeline", "-p", "worker-failing-test")
 
 			By("running the build on the doomed worker")
-			fly("trigger-job", "-w", "-j", "worker-failing-test/use-doomed-worker")
+			fly.Spawn("trigger-job", "-w", "-j", "worker-failing-test/use-doomed-worker")
 
 			By("making baggageclaim become unresponsive on the doomed worker")
 			bosh("ssh", "other_worker/0", "-c", "sudo pkill -F /var/vcap/sys/run/baggageclaim/baggageclaim.pid -STOP")
 
 			By("running check-resource to force the existing volume to be no longer desired")
-			fly("check-resource", "-r", "worker-failing-test/controlled-timer")
+			fly.Spawn("check-resource", "-r", "worker-failing-test/controlled-timer")
 
 			// at this point, GC should try to remove the volume, and begin to hang
 		})
@@ -43,7 +43,7 @@ var _ = Describe("Worker failing", func() {
 			Eventually(waitForStalledWorker()).ShouldNot(BeEmpty())
 
 			By("running the build on the safe worker")
-			fly("trigger-job", "-w", "-j", "worker-failing-test/use-safe-worker")
+			fly.Spawn("trigger-job", "-w", "-j", "worker-failing-test/use-safe-worker")
 
 			By("having a cache for the controlled-timer resource")
 			Expect(volumesByResourceType("time")).ToNot(BeEmpty())
@@ -52,7 +52,7 @@ var _ = Describe("Worker failing", func() {
 			time.Sleep(5 * time.Second)
 
 			By("running check-resource to force the existing volume on the safe worker to be no longer desired")
-			fly("check-resource", "-r", "worker-failing-test/controlled-timer")
+			fly.Spawn("check-resource", "-r", "worker-failing-test/controlled-timer")
 
 			By("eventually garbage collecting the volume from the safe worker")
 			Eventually(func() []string {
