@@ -56,6 +56,23 @@ func (cmd *WorkerCommand) Execute(args []string) error {
 	return <-ifrit.Invoke(sigmon.New(runner)).Wait()
 }
 
+type healthCheckRunner struct{
+}
+
+func (h *healthCheckRunner) Run(signals <-chan os.Signal, ready chan<- struct{}) error {
+	close(ready)
+
+	http.HandleFunc("/healthcheck", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+	})
+
+	http.ListenAndServe(":8080", nil)
+
+	<-signals
+	return nil
+}
+
+
 func (cmd *WorkerCommand) Runner(args []string) (ifrit.Runner, error) {
 	if cmd.ResourceTypes == "" {
 		cmd.ResourceTypes = flag.Dir(discoverAsset("resource-types"))
@@ -83,6 +100,10 @@ func (cmd *WorkerCommand) Runner(args []string) (ifrit.Runner, error) {
 		{
 			Name:   "baggageclaim",
 			Runner: NewLoggingRunner(logger.Session("baggageclaim-runner"), baggageclaimRunner),
+		},
+		{
+			Name:   "health-checker",
+			Runner: NewLoggingRunner(logger.Session("health-check-runner"), &healthCheckRunner{}),
 		},
 	}
 
@@ -153,6 +174,7 @@ func (cmd *WorkerCommand) Runner(args []string) (ifrit.Runner, error) {
 				},
 			),
 		})
+
 	}
 
 	return grouper.NewParallel(os.Interrupt, members), nil
