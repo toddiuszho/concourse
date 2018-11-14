@@ -1,4 +1,4 @@
-port module Layout exposing (Flags, Model, Msg, init, locationMsg, subscriptions, update, view)
+port module Layout exposing (Flags, Model, Msg(..), init, locationMsg, subscriptions, update, view)
 
 import Favicon
 import Html exposing (Html)
@@ -255,8 +255,7 @@ view model =
 
         _ ->
             Html.div [ class "content-frame" ]
-                [ Html.div [ id "top-bar-app" ]
-                    [ Html.map (TopMsg model.navIndex) (TopBar.view model.topModel) ]
+                [ Html.map (TopMsg model.navIndex) (TopBar.view model.topModel)
                 , Html.div [ class "bottom" ]
                     [ Html.div [ id "content" ]
                         [ Html.div [ id "subpage" ]
