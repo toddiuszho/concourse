@@ -60,6 +60,12 @@ func (fake *FakeResourceConfigCheckSessionFactory) FindOrCreateResourceConfigChe
 	return len(fake.findOrCreateResourceConfigCheckSessionArgsForCall)
 }
 
+func (fake *FakeResourceConfigCheckSessionFactory) FindOrCreateResourceConfigCheckSessionCalls(stub func(lager.Logger, string, atc.Source, creds.VersionedResourceTypes, db.ContainerOwnerExpiries) (db.ResourceConfigCheckSession, error)) {
+	fake.findOrCreateResourceConfigCheckSessionMutex.Lock()
+	defer fake.findOrCreateResourceConfigCheckSessionMutex.Unlock()
+	fake.FindOrCreateResourceConfigCheckSessionStub = stub
+}
+
 func (fake *FakeResourceConfigCheckSessionFactory) FindOrCreateResourceConfigCheckSessionArgsForCall(i int) (lager.Logger, string, atc.Source, creds.VersionedResourceTypes, db.ContainerOwnerExpiries) {
 	fake.findOrCreateResourceConfigCheckSessionMutex.RLock()
 	defer fake.findOrCreateResourceConfigCheckSessionMutex.RUnlock()
@@ -68,6 +74,8 @@ func (fake *FakeResourceConfigCheckSessionFactory) FindOrCreateResourceConfigChe
 }
 
 func (fake *FakeResourceConfigCheckSessionFactory) FindOrCreateResourceConfigCheckSessionReturns(result1 db.ResourceConfigCheckSession, result2 error) {
+	fake.findOrCreateResourceConfigCheckSessionMutex.Lock()
+	defer fake.findOrCreateResourceConfigCheckSessionMutex.Unlock()
 	fake.FindOrCreateResourceConfigCheckSessionStub = nil
 	fake.findOrCreateResourceConfigCheckSessionReturns = struct {
 		result1 db.ResourceConfigCheckSession
@@ -76,6 +84,8 @@ func (fake *FakeResourceConfigCheckSessionFactory) FindOrCreateResourceConfigChe
 }
 
 func (fake *FakeResourceConfigCheckSessionFactory) FindOrCreateResourceConfigCheckSessionReturnsOnCall(i int, result1 db.ResourceConfigCheckSession, result2 error) {
+	fake.findOrCreateResourceConfigCheckSessionMutex.Lock()
+	defer fake.findOrCreateResourceConfigCheckSessionMutex.Unlock()
 	fake.FindOrCreateResourceConfigCheckSessionStub = nil
 	if fake.findOrCreateResourceConfigCheckSessionReturnsOnCall == nil {
 		fake.findOrCreateResourceConfigCheckSessionReturnsOnCall = make(map[int]struct {

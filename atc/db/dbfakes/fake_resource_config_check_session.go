@@ -55,7 +55,15 @@ func (fake *FakeResourceConfigCheckSession) IDCallCount() int {
 	return len(fake.iDArgsForCall)
 }
 
+func (fake *FakeResourceConfigCheckSession) IDCalls(stub func() int) {
+	fake.iDMutex.Lock()
+	defer fake.iDMutex.Unlock()
+	fake.IDStub = stub
+}
+
 func (fake *FakeResourceConfigCheckSession) IDReturns(result1 int) {
+	fake.iDMutex.Lock()
+	defer fake.iDMutex.Unlock()
 	fake.IDStub = nil
 	fake.iDReturns = struct {
 		result1 int
@@ -63,6 +71,8 @@ func (fake *FakeResourceConfigCheckSession) IDReturns(result1 int) {
 }
 
 func (fake *FakeResourceConfigCheckSession) IDReturnsOnCall(i int, result1 int) {
+	fake.iDMutex.Lock()
+	defer fake.iDMutex.Unlock()
 	fake.IDStub = nil
 	if fake.iDReturnsOnCall == nil {
 		fake.iDReturnsOnCall = make(map[int]struct {
@@ -97,7 +107,15 @@ func (fake *FakeResourceConfigCheckSession) ResourceConfigCallCount() int {
 	return len(fake.resourceConfigArgsForCall)
 }
 
+func (fake *FakeResourceConfigCheckSession) ResourceConfigCalls(stub func() db.ResourceConfig) {
+	fake.resourceConfigMutex.Lock()
+	defer fake.resourceConfigMutex.Unlock()
+	fake.ResourceConfigStub = stub
+}
+
 func (fake *FakeResourceConfigCheckSession) ResourceConfigReturns(result1 db.ResourceConfig) {
+	fake.resourceConfigMutex.Lock()
+	defer fake.resourceConfigMutex.Unlock()
 	fake.ResourceConfigStub = nil
 	fake.resourceConfigReturns = struct {
 		result1 db.ResourceConfig
@@ -105,6 +123,8 @@ func (fake *FakeResourceConfigCheckSession) ResourceConfigReturns(result1 db.Res
 }
 
 func (fake *FakeResourceConfigCheckSession) ResourceConfigReturnsOnCall(i int, result1 db.ResourceConfig) {
+	fake.resourceConfigMutex.Lock()
+	defer fake.resourceConfigMutex.Unlock()
 	fake.ResourceConfigStub = nil
 	if fake.resourceConfigReturnsOnCall == nil {
 		fake.resourceConfigReturnsOnCall = make(map[int]struct {

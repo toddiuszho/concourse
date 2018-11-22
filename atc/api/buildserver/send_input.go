@@ -5,11 +5,10 @@ import (
 	"net/http"
 	"time"
 
+	"code.cloudfoundry.org/lager"
 	"github.com/concourse/concourse/atc"
 	"github.com/concourse/concourse/atc/db"
 	"github.com/tedsuo/rata"
-
-	"code.cloudfoundry.org/lager"
 )
 
 func (s *Server) SendInputToBuildPlan(build db.Build) http.Handler {
