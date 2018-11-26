@@ -260,6 +260,16 @@ var _ = Describe("Volume", func() {
 		})
 	})
 
+	Describe("createdVolume.InitializeResourceCache", func() {
+		It("initialize worker artifact", func() {
+
+		})
+
+		It("associates worker artifact with the volume", func() {
+
+		})
+	})
+
 	Describe("createdVolume.InitializeTaskCache", func() {
 		Context("when there is a volume that belongs to worker task cache", func() {
 			var (

@@ -2,9 +2,11 @@ package db
 
 import (
 	"database/sql"
+	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/concourse/concourse/atc"
+	"github.com/lib/pq"
 )
 
 //go:generate counterfeiter . WorkerArtifact
@@ -13,7 +15,7 @@ type WorkerArtifact interface {
 	ID() int
 	Path() string
 	Checksum() string
-	CreatedAt() int
+	CreatedAt() time.Time
 }
 
 type artifact struct {
@@ -21,14 +23,14 @@ type artifact struct {
 
 	id        int
 	path      string
-	createdAt int
+	createdAt time.Time
 	checksum  string
 }
 
-func (a *artifact) ID() int          { return a.id }
-func (a *artifact) Path() string     { return a.path }
-func (a *artifact) Checksum() string { return a.checksum }
-func (a *artifact) CreatedAt() int   { return a.createdAt }
+func (a *artifact) ID() int              { return a.id }
+func (a *artifact) Path() string         { return a.path }
+func (a *artifact) Checksum() string     { return a.checksum }
+func (a *artifact) CreatedAt() time.Time { return a.createdAt }
 
 func saveWorkerArtifact(tx Tx, atcArtifact atc.WorkerArtifact, conn Conn) (WorkerArtifact, error) {
 
@@ -62,6 +64,8 @@ func saveWorkerArtifact(tx Tx, atcArtifact atc.WorkerArtifact, conn Conn) (Worke
 }
 
 func getWorkerArtifact(tx Tx, id int, conn Conn) (WorkerArtifact, bool, error) {
+	var createdAtTime pq.NullTime
+
 	artifact := &artifact{conn: conn}
 
 	err := psql.Select("id", "created_at", "path", "checksum").
@@ -71,8 +75,7 @@ func getWorkerArtifact(tx Tx, id int, conn Conn) (WorkerArtifact, bool, error) {
 		}).
 		RunWith(tx).
 		QueryRow().
-		Scan(&artifact.id, &artifact.createdAt, &artifact.path, &artifact.checksum)
-
+		Scan(&artifact.id, &createdAtTime, &artifact.path, &artifact.checksum)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, false, nil
@@ -81,5 +84,6 @@ func getWorkerArtifact(tx Tx, id int, conn Conn) (WorkerArtifact, bool, error) {
 		return nil, false, err
 	}
 
+	artifact.createdAt = createdAtTime.Time
 	return artifact, true, nil
 }

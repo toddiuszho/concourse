@@ -3,6 +3,7 @@ package dbfakes
 
 import (
 	sync "sync"
+	time "time"
 
 	db "github.com/concourse/concourse/atc/db"
 )
@@ -18,15 +19,15 @@ type FakeWorkerArtifact struct {
 	checksumReturnsOnCall map[int]struct {
 		result1 string
 	}
-	CreatedAtStub        func() int
+	CreatedAtStub        func() time.Time
 	createdAtMutex       sync.RWMutex
 	createdAtArgsForCall []struct {
 	}
 	createdAtReturns struct {
-		result1 int
+		result1 time.Time
 	}
 	createdAtReturnsOnCall map[int]struct {
-		result1 int
+		result1 time.Time
 	}
 	IDStub        func() int
 	iDMutex       sync.RWMutex
@@ -104,7 +105,7 @@ func (fake *FakeWorkerArtifact) ChecksumReturnsOnCall(i int, result1 string) {
 	}{result1}
 }
 
-func (fake *FakeWorkerArtifact) CreatedAt() int {
+func (fake *FakeWorkerArtifact) CreatedAt() time.Time {
 	fake.createdAtMutex.Lock()
 	ret, specificReturn := fake.createdAtReturnsOnCall[len(fake.createdAtArgsForCall)]
 	fake.createdAtArgsForCall = append(fake.createdAtArgsForCall, struct {
@@ -127,32 +128,32 @@ func (fake *FakeWorkerArtifact) CreatedAtCallCount() int {
 	return len(fake.createdAtArgsForCall)
 }
 
-func (fake *FakeWorkerArtifact) CreatedAtCalls(stub func() int) {
+func (fake *FakeWorkerArtifact) CreatedAtCalls(stub func() time.Time) {
 	fake.createdAtMutex.Lock()
 	defer fake.createdAtMutex.Unlock()
 	fake.CreatedAtStub = stub
 }
 
-func (fake *FakeWorkerArtifact) CreatedAtReturns(result1 int) {
+func (fake *FakeWorkerArtifact) CreatedAtReturns(result1 time.Time) {
 	fake.createdAtMutex.Lock()
 	defer fake.createdAtMutex.Unlock()
 	fake.CreatedAtStub = nil
 	fake.createdAtReturns = struct {
-		result1 int
+		result1 time.Time
 	}{result1}
 }
 
-func (fake *FakeWorkerArtifact) CreatedAtReturnsOnCall(i int, result1 int) {
+func (fake *FakeWorkerArtifact) CreatedAtReturnsOnCall(i int, result1 time.Time) {
 	fake.createdAtMutex.Lock()
 	defer fake.createdAtMutex.Unlock()
 	fake.CreatedAtStub = nil
 	if fake.createdAtReturnsOnCall == nil {
 		fake.createdAtReturnsOnCall = make(map[int]struct {
-			result1 int
+			result1 time.Time
 		})
 	}
 	fake.createdAtReturnsOnCall[i] = struct {
-		result1 int
+		result1 time.Time
 	}{result1}
 }
 

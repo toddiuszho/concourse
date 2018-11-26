@@ -388,7 +388,25 @@ func (volume *createdVolume) InitializeResourceCache(resourceCache UsedResourceC
 
 func (volume *createdVolume) InitializeArtifact(path string, checksum string) (WorkerArtifact, error) {
 
+	tx, err := volume.conn.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	defer Rollback(tx)
 	// initialize worker artifact
+	atcWorkerArtifact := atc.WorkerArtifact{
+		Checksum: checksum,
+		Path:     path,
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = saveWorkerArtifact(tx, atcWorkerArtifact, volume.conn)
+	if err != nil {
+		return nil, err
+	}
 
 	// associate worker artifact with the volume
 

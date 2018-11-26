@@ -27,7 +27,7 @@ var _ = Describe("Artifacts API", func() {
 		fakeAccessor.CreateReturns(fakeaccess)
 	})
 
-	FDescribe("POST /api/v1/teams/:team_name/artifacts", func() {
+	Describe("POST /api/v1/teams/:team_name/artifacts", func() {
 		var request *http.Request
 		var response *http.Response
 
@@ -189,5 +189,104 @@ var _ = Describe("Artifacts API", func() {
 			})
 		})
 
+	})
+
+	FDescribe("GET /api/v1/teams/:team_name/artifacts/:artifcat_id", func() {
+		var response *http.Response
+
+		BeforeEach(func() {
+			fakeaccess = new(accessorfakes.FakeAccess)
+			fakeaccess.IsAuthenticatedReturns(true)
+
+			fakeAccessor.CreateReturns(fakeaccess)
+		})
+
+		JustBeforeEach(func() {
+			var err error
+			response, err = http.Get(server.URL + "/api/v1/teams/some-team/artifacts/1")
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		Context("when not authenticated", func() {
+			BeforeEach(func() {
+				fakeaccess.IsAuthenticatedReturns(false)
+			})
+
+			It("returns 401 Unauthorized", func() {
+				Expect(response.StatusCode).To(Equal(http.StatusUnauthorized))
+			})
+		})
+
+		Context("when not authorized", func() {
+			BeforeEach(func() {
+				fakeaccess.IsAuthorizedReturns(false)
+			})
+
+			It("returns 403 Forbidden", func() {
+				Expect(response.StatusCode).To(Equal(http.StatusForbidden))
+			})
+		})
+
+		Context("when authorized", func() {
+			BeforeEach(func() {
+				fakeaccess.IsAuthorizedReturns(true)
+
+			})
+
+			Context("when the artifact is found", func() {
+				var fakeWorkerArtifact *dbfakes.FakeWorkerArtifact
+
+				BeforeEach(func() {
+					fakeWorkerArtifact = new(dbfakes.FakeWorkerArtifact)
+					fakeWorkerArtifact.IDReturns(1)
+					fakeWorkerArtifact.CreatedAtReturns(42)
+					fakeWorkerArtifact.PathReturns("/")
+					fakeWorkerArtifact.ChecksumReturns("some-checksum")
+					dbTeam.WorkerArtifactReturns(fakeWorkerArtifact, true, nil)
+				})
+
+				It("returns 200", func() {
+					Expect(response.StatusCode).To(Equal(http.StatusOK))
+				})
+
+				It("returns Content-Type 'application/json'", func() {
+					Expect(response.Header.Get("Content-Type")).To(Equal("application/json"))
+				})
+
+				It("returns artifact", func() {
+					body, err := ioutil.ReadAll(response.Body)
+					Expect(err).NotTo(HaveOccurred())
+
+					Expect(body).To(MatchJSON(`
+						{
+							"id": 1,
+							"path": "/",
+							"checksum": "some-checksum",
+							"created_at": 42
+						}`))
+				})
+			})
+
+			Context("when the finding artifact fails", func() {
+				BeforeEach(func() {
+					dbTeam.WorkerArtifactReturns(nil, false, errors.New("nope"))
+				})
+
+				It("returns 500 InternalServerError", func() {
+					Expect(response.StatusCode).To(Equal(http.StatusInternalServerError))
+				})
+			})
+
+			Context("when the artifact is not found", func() {
+				BeforeEach(func() {
+					dbTeam.WorkerArtifactReturns(nil, false, nil)
+				})
+
+				It("returns Not Found", func() {
+					Expect(response.StatusCode).To(Equal(http.StatusNotFound))
+				})
+
+			})
+		})
 	})
 })

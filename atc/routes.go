@@ -202,5 +202,5 @@ var Routes = rata.Routes([]rata.Route{
 	{Path: "/api/v1/teams/:team_name/builds", Method: "GET", Name: ListTeamBuilds},
 
 	{Path: "/api/v1/teams/:team_name/artifacts", Method: "POST", Name: CreateArtifact},
-	{Path: "/api/v1/teams/:team_name/artifacts/:id", Method: "GET", Name: GetArtifact},
+	{Path: "/api/v1/teams/:team_name/artifacts/:artifact_id", Method: "GET", Name: GetArtifact},
 })
